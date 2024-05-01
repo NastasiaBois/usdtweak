@@ -74,4 +74,25 @@ struct AttributeCreateDefaultValue : public SdfLayerCommand {
 };
 template void ExecuteAfterDraw<AttributeCreateDefaultValue>(UsdAttribute attribute);
 
-
+struct AttributeConnect : public SdfLayerCommand {
+    AttributeConnect(UsdStageWeakPtr stage, SdfPath tail, SdfPath head) :
+    _stage(stage), _head(head), _tail(tail) {}
+    
+    bool DoIt() override {
+        if (_stage) {
+            auto layer = _stage->GetEditTarget().GetLayer();
+            if (layer) {
+                SdfCommandGroupRecorder recorder(_undoCommands, layer);
+                UsdAttribute headAttr = _stage->GetAttributeAtPath(_head);
+                headAttr.AddConnection(_tail);
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    UsdStageWeakPtr _stage;
+    SdfPath _head;
+    SdfPath _tail;
+};
+template void ExecuteAfterDraw<AttributeConnect>(UsdStageWeakPtr stage, SdfPath tail, SdfPath head);

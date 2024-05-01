@@ -562,15 +562,16 @@ struct UsdPrimNode {
     SdfPath primPath; // 8 bytes
     // Properties could be tokens or path ?? path could be useful for connecting the properties
     // Copy of the property names to avoid iterating on them (could reduce the name size)
-    std::vector<std::string> properties;
+    std::vector<SdfPath> properties;
     bool selected = false;
 };
 
 // TODO: what do we need to draw a bezier curve between nodes
 // TODO: how is the interaction with bezier curves done ??
 struct NodeConnection {
-    ImVec2 begin;   // 8 bytes
-    ImVec2 end;     // 8 bytes
+    NodeConnection(const SdfPath &begin_, const SdfPath &end_) : begin(begin_), end(end_) {}
+    SdfPath begin;
+    SdfPath end;     // 8 bytes
 };
 
 // TODO black board sheet should also store the canvas position, that would be easier when switching
@@ -594,12 +595,14 @@ struct ConnectionsSheet {
         }
     }
     
+    UsdStageWeakPtr GetCurrentStage() { return rootPrim ? rootPrim.GetStage() : nullptr; }
+    
     // Update the node inputs/outputs positions and the connections such that this is visually
     // coherent
     void Update() {
         // For all the nodes, update positions and connections and attributes ??
         // We need to know the stage
-        static std::vector<std::pair<SdfPath, SdfPath>> connections;
+        //static std::vector<std::pair<SdfPath, SdfPath>> connections;
         connections.clear();
         // Should we just process the whole stage (or layer)
         // it's too slow unfortunately
@@ -633,7 +636,8 @@ struct ConnectionsSheet {
             //const auto properties = node.prim.GetAuthoredProperties();
             for (const UsdAttribute &attr: node.prim.GetAttributes()) {
                 // TODO check if it's an input/output or generic connectable parameter
-                node.properties.push_back(attr.GetName().GetString());
+                //node.properties.push_back(attr.GetName().GetString());
+                node.properties.push_back(attr.GetPath());
                 if (attr.HasAuthoredConnections()) {
                     //properties.push_back(attr);
                     SdfPathVector sources;
@@ -646,7 +650,7 @@ struct ConnectionsSheet {
                 }
             }
         }
-        //std::cout << "Connections " << connections.size() << std::endl;
+        //@std::cout << "Connections " << connections.size() << std::endl;
     }
 
     // root prim to know the stage and the prim to add other prim under
@@ -759,8 +763,8 @@ struct ConnectionsEditorCanvas { // rename to InfiniteCanvas ??
     enum Events : uint8_t {
         IDLE = 0,
         CANVAS_CLICKED,
-        CANVAS_CLICKED_BTN_SPACE,
-        CANVAS_CLICKED_BTN_CTRL,
+        CANVAS_CLICKED_PANNING,
+        CANVAS_CLICKED_ZOOMING,
         NODE_CLICKED,
         CONNECTOR_CLICKED,
         CLICK_RELEASED
@@ -803,15 +807,16 @@ struct ConnectionsEditorCanvas { // rename to InfiniteCanvas ??
         if (widgetBoundingBox.Contains(ImGui::GetMousePos())) {
             // Click on the canvas TODO test bounding box
             if (ImGui::IsMouseClicked(0)) {
-                std::cout << "Mouse clicked" << std::endl;
-                if (ImGui::IsKeyDown(ImGuiKey_Space)) {
-                    event = Events::CANVAS_CLICKED_BTN_SPACE;
-                } else if (ImGui::IsKeyDown(ImGuiKey_LeftCtrl)) {
-                    event = Events::CANVAS_CLICKED_BTN_CTRL;
-                    ImGuiIO& io = ImGui::GetIO();
-                    zoomClick = io.MouseClickedPos[ImGuiMouseButton_Left];
+                if (ImGui::IsKeyDown(ImGuiKey_LeftAlt)) {
+                    event = Events::CANVAS_CLICKED_PANNING;
                 } else {
                     event = Events::CANVAS_CLICKED;
+                }
+            } else if (ImGui::IsMouseClicked(1)) {
+                if (ImGui::IsKeyDown(ImGuiKey_LeftAlt)) {
+                    event = Events::CANVAS_CLICKED_ZOOMING;
+                    ImGuiIO& io = ImGui::GetIO();
+                    zoomClick = io.MouseClickedPos[ImGuiMouseButton_Left];
                 }
             } else if (ImGui::IsMouseReleased(0)) { // TODO Should be any button ??
                 event = Events::CLICK_RELEASED;
@@ -903,27 +908,28 @@ struct ConnectionsEditorCanvas { // rename to InfiniteCanvas ??
     
     void DrawNode(UsdPrimNode &node) {
         ImGuiContext& g = *GImGui;
+        ImGuiIO& io = ImGui::GetIO();
         drawList->ChannelsSetCurrent(1); // Foreground
         constexpr float headerHeight = 50.f;
         constexpr float connectorSize = 14.f; // square connector size
-
+        
         //static std::vector<UsdAttribute> properties;
         //properties.clear();
-        const std::vector<std::string> &properties = node.properties;
+        const std::vector<SdfPath> &properties = node.properties;
         // TODO:
         //    Looking at the usd code, GetAuthoredProperties is doing too many things and allocating/release to much memory
         //    This is not going to scale to many nodes, find a way to get the connections fast
         //const auto properties = node.prim.GetAuthoredProperties();
-//        for (const UsdAttribute &attr: node.prim.GetAttributes()) {
-//            if (attr.HasAuthoredConnections()) {
-//                properties.push_back(attr);
-////                SdfPathVector sources;
-////                attr.GetConnections(&sources);
-////                for (const auto &path:sources) {
-////                    properties.emplace_back(path);
-////                }
-//            }
-//        }
+        //        for (const UsdAttribute &attr: node.prim.GetAttributes()) {
+        //            if (attr.HasAuthoredConnections()) {
+        //                properties.push_back(attr);
+        ////                SdfPathVector sources;
+        ////                attr.GetConnections(&sources);
+        ////                for (const auto &path:sources) {
+        ////                    properties.emplace_back(path);
+        ////                }
+        //            }
+        //        }
         
         int nbNodes = static_cast<int>(properties.size());
         float nodeHeight = (nbNodes+2)*(g.FontSize + 2.f) + headerHeight; // 50 == header size
@@ -935,15 +941,16 @@ struct ConnectionsEditorCanvas { // rename to InfiniteCanvas ??
         
         drawList->AddRectFilled(CanvasToScreen(nodeMin), CanvasToScreen(nodeMax), 0xFF090920, 4.0f);
         drawList->AddRect(CanvasToScreen(nodeMin), CanvasToScreen(nodeMax), node.selected ? IM_COL32(0, 255, 0, 255) : IM_COL32(255, 255, 255, 255), 4.0f);
-
+        
         // TODO: add padding, truncate name if too long, add tooltip
         drawList->AddText(g.Font, g.FontSize*zooming, CanvasToScreen(nodeMin), IM_COL32(255, 255, 255, 255), node.prim.GetName().GetText());
         
         // Check if the user clicked on the node and update the event.
-        // The event might be updated later on, on the connectors as well
+        // The event might be again updated later on, on the connectors as well, that's how choosing the event is implemented
         if (ImGui::IsMouseClicked(0)) {
             if (nodeBoundingBox.Contains(ImGui::GetMousePos())) {
                 event = Events::NODE_CLICKED; // Node clicked
+                nodeClicked = &node;
             }
         }
         
@@ -955,29 +962,48 @@ struct ConnectionsEditorCanvas { // rename to InfiniteCanvas ??
             // Input connector position min max
             const auto conMin = ImVec2(nodeMin.x - connectorSize/2, inputStartPos.y + 1.f + linePos);
             const auto conMax = ImVec2(nodeMin.x + connectorSize/2, inputStartPos.y + 15.f + linePos);
-            drawList->AddRectFilled(CanvasToScreen(conMin), CanvasToScreen(conMax), IM_COL32(255, 255, 255, 255));
+            ImU32 connectorColor = IM_COL32(255, 255, 255, 255);
+            // We test if the mouse is hovering the input connector when we are connecting nodes
+            if (state == CONNECTING_NODES) {
+                ImRect connectorBoundingBox(CanvasToScreen(conMin), CanvasToScreen(conMax));
+                if (connectorBoundingBox.Contains(ImGui::GetMousePos())) {
+                    connectorHeadClicked = properties[i];
+                    connectorColor = IM_COL32(255, 127, 17, 255);
+                }
+            }
+
+            drawList->AddRectFilled(CanvasToScreen(conMin), CanvasToScreen(conMax), connectorColor);
             
             // Output connector min/max
+            connectorColor = connectorTailClicked == properties[i] ? IM_COL32(255, 127, 127, 255): IM_COL32(255, 255, 255, 255);
             const auto outConMin = ImVec2(nodeMax.x - connectorSize/2, inputStartPos.y + 1.f + linePos);
             const auto outConMax = ImVec2(nodeMax.x + connectorSize/2, inputStartPos.y + 15.f + linePos);
-            drawList->AddRectFilled(CanvasToScreen(outConMin), CanvasToScreen(outConMax), IM_COL32(255, 255, 255, 255));
-     
+            drawList->AddRectFilled(CanvasToScreen(outConMin), CanvasToScreen(outConMax), connectorColor);
+            
+            // Checking if the output connector is clicked
+            if (ImGui::IsMouseClicked(0)) {
+                ImRect connectorBoundingBox(CanvasToScreen(outConMin), CanvasToScreen(outConMax));
+                if (connectorBoundingBox.Contains(ImGui::GetMousePos())) {
+                    event = Events::CONNECTOR_CLICKED; // Node clicked
+                    connectorTailClicked = properties[i];
+                }
+            }
+            
             const auto textPos = inputStartPos + ImVec2(0, linePos); // TODO: padding and text size
-            drawList->AddText(g.Font, g.FontSize*zooming, CanvasToScreen(textPos), IM_COL32(255, 255, 255, 255), properties[i].c_str());
+            //propertie[i].
+            drawList->AddText(g.Font, g.FontSize*zooming, CanvasToScreen(textPos), IM_COL32(255, 255, 255, 255), properties[i].GetNameToken().GetText());
+            
+            // Update positions of the connectors
+            connectorPositions[properties[i]] = ImVec4(nodeMin.x, inputStartPos.y + 9.f + linePos, nodeMax.x, inputStartPos.y + 9.f + linePos);
         }
         
         // TODO: will we need invisible buttons ? code left here
         //ImGui::SetCursorScreenPos(nodeBoundingBox.Min);
-//        if (buttonBoundingBox.GetArea() > 0.f && ImGui::InvisibleButton("node", nodeBoundingBox.GetSize())) {
-//            //node.selected = !node.selected; // TODO add info to event
-//            event = Events::NODE_CLICKED; // Node clicked
-//        }
-        
-        
-        // Event now should be not changing anymore
-        if (event==NODE_CLICKED && !node.selected) {
-            nodeClicked = &node;
-        }
+        //        if (buttonBoundingBox.GetArea() > 0.f && ImGui::InvisibleButton("node", nodeBoundingBox.GetSize())) {
+        //            //node.selected = !node.selected; // TODO add info to event
+        //            event = Events::NODE_CLICKED; // Node clicked
+        //        }
+
         // Update node data based on current state
         if (state == SELECTING_REGION) { // Region selection
             if (GetSelectionRegion().Overlaps(ImRect(CanvasToScreen(nodeMin), CanvasToScreen(nodeMax)))) {
@@ -985,17 +1011,18 @@ struct ConnectionsEditorCanvas { // rename to InfiniteCanvas ??
             } else {
                 node.selected = false;
             }
-        } else if (state == MOVING_NODE && !nodeClicked && node.selected) {
-            ImGuiIO& io = ImGui::GetIO();
-            node.position = node.position + io.MouseDelta/zooming;
+        } else if (state == MOVING_NODE && nodeClicked) {
+            if (nodeClicked->selected && node.selected) {
+                ImGuiIO& io = ImGui::GetIO();
+                node.position = node.position + io.MouseDelta/zooming;
+            } else if (!nodeClicked->selected && nodeClicked == &node) {
+                // TODO this could be a function UpdateNodePosition(node)
+                nodeClicked->position = nodeClicked->position + io.MouseDelta/zooming;
+            }
         }
 
         // Update
         hasSelectedNodes |= node.selected;
-    }
-    
-    void DrawConnections() {
-        
     }
     
     // Draw so test nodes to see how the coordinate system works as all are expressed in screen
@@ -1080,12 +1107,33 @@ struct ConnectionsEditorCanvas { // rename to InfiniteCanvas ??
     void DrawSheet(ConnectionsSheet &sheet) {
         ImGuiContext& g = *GImGui;
         ImGuiIO& io = ImGui::GetIO();
+        currentStage = sheet.GetCurrentStage();
+        connectorPositions.clear();
         //ImGuiWindow* window = g.CurrentWindow;
         // Give the node a position in canvas coordinates
         drawList->ChannelsSetCurrent(1); // Foreground
         //static ImVec2 nodePos(0.f, 0.f); // Position in the canvas
         for (auto &node : sheet.nodes) {
             DrawNode(node);
+        }
+        drawList->ChannelsSetCurrent(0); // Background
+        for (const auto &con:sheet.connections) {
+            const auto arrowHead = connectorPositions.find(con.begin);
+            if (arrowHead != connectorPositions.end()) {
+                const auto arrowTail = connectorPositions.find(con.end);
+                if (arrowTail != connectorPositions.end()) {
+                    ImVec2 p2(arrowHead->second.x, arrowHead->second.y);
+                    ImVec2 p1(arrowTail->second.z, arrowTail->second.w);
+                    drawList->AddLine(CanvasToScreen(p1), CanvasToScreen(p2), IM_COL32(255, 255, 255, 255));
+                }
+            }
+        }
+        
+        // Show connecting node
+        if (state == CONNECTING_NODES) {
+            const auto arrowTail = connectorPositions.find(connectorTailClicked);
+            ImVec2 p1(arrowTail->second.z, arrowTail->second.w);
+            drawList->AddLine(CanvasToScreen(p1), ImGui::GetMousePos(),IM_COL32(255, 127, 127, 255));
         }
     }
     
@@ -1105,18 +1153,20 @@ struct ConnectionsEditorCanvas { // rename to InfiniteCanvas ??
     // Not very readable, but it works
     void UpdateState() {
         ImGuiIO& io = ImGui::GetIO();
-        if (state==States::HOVERING_CANVAS) {
+        if (state ==States::HOVERING_CANVAS) {
             if (event == NODE_CLICKED) {
-                state = SELECTING_NODE; // Single node selectio,
+                state = SELECTING_NODE; // Single node selection,
             } else if (event == CANVAS_CLICKED) {
                 state = SELECTING_REGION; // Region selection
                 selectionOrigin = ImGui::GetMousePos();
-            } else if (event == CANVAS_CLICKED_BTN_SPACE) {
+            } else if (event == CANVAS_CLICKED_PANNING) {
                 state = CANVAS_PANING;
-            } else if (event == CANVAS_CLICKED_BTN_CTRL) {
+            } else if (event == CANVAS_CLICKED_ZOOMING) {
                 state = CANVAS_ZOOMING;
             } else if (event == CLICK_RELEASED) {
                 state = HOVERING_CANVAS;
+            } else if (event == CONNECTOR_CLICKED) {
+                state = CONNECTING_NODES;
             }
         } else if (state == SELECTING_REGION) { // Region selection
             if (event == CLICK_RELEASED) {
@@ -1134,7 +1184,7 @@ struct ConnectionsEditorCanvas { // rename to InfiniteCanvas ??
                 // TODO Store position ??
             }
         } else if (state == CANVAS_PANING) {
-            if (event == CLICK_RELEASED || !ImGui::IsKeyDown(ImGuiKey_Space)) {
+            if (event == CLICK_RELEASED || !ImGui::IsKeyDown(ImGuiKey_LeftAlt)) {
                 state = HOVERING_CANVAS;
             }
             // Update scrolling
@@ -1142,21 +1192,27 @@ struct ConnectionsEditorCanvas { // rename to InfiniteCanvas ??
                 scrolling = scrolling + io.MouseDelta;
             }
         } else if (state == CANVAS_ZOOMING) {
-            if (event == CLICK_RELEASED || !ImGui::IsKeyDown(ImGuiKey_LeftCtrl)) {
+            if (event == CLICK_RELEASED || !ImGui::IsKeyDown(ImGuiKey_LeftAlt)) {
                 state = HOVERING_CANVAS;
             }
-            else if (ImGui::IsMouseDragging(ImGuiMouseButton_Left, 0.f)) {
+            else if (ImGui::IsMouseDragging(ImGuiMouseButton_Right, 0.f)) {
                 ZoomFromPosition(zoomClick, io.MouseDelta);
             }
         } else if (state == MOVING_NODE) {
             if (event == CLICK_RELEASED) {
                 state = HOVERING_CANVAS;
                 nodeClicked = nullptr;
-            } else if (nodeClicked) {
-                // TODO this could be a function UpdateNodePosition(node)
-                nodeClicked->position = nodeClicked->position + io.MouseDelta/zooming;
             }
-            
+        } else if (state == CONNECTING_NODES) {
+            if (event == CLICK_RELEASED) {
+                if (connectorHeadClicked != SdfPath::EmptyPath()) {
+                    // Launch a command !
+                    ExecuteAfterDraw<AttributeConnect>(currentStage, connectorTailClicked, connectorHeadClicked);
+                }
+                state = HOVERING_CANVAS;
+                connectorTailClicked = SdfPath::EmptyPath();
+                connectorHeadClicked = SdfPath::EmptyPath();
+            }
         }
         // Debug
         ImGuiContext& g = *GImGui;
@@ -1191,11 +1247,18 @@ struct ConnectionsEditorCanvas { // rename to InfiniteCanvas ??
     ImRect widgetBoundingBox;
     UsdPrimNode *nodeClicked = nullptr;
     
+    SdfPath connectorTailClicked;
+    SdfPath connectorHeadClicked;
 
-    
+    // Connectors positions
+    std::unordered_map<SdfPath, ImVec4, SdfPath::Hash> connectorPositions; // 2 in 2 out
+    // std::unordered_map<SdfPath, ImVec2, SdfPath::Hash> outputsPositions;
+
     bool hasSelectedNodes = false; // computed at each frame
     
     ImDrawList* drawList = nullptr;
+    
+    UsdStageWeakPtr currentStage;
 };
 
 

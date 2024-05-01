@@ -76,6 +76,7 @@ struct ClearUndoRedoCommand;
 
 struct AttributeSet;
 struct AttributeCreateDefaultValue;
+struct AttributeConnect;
 
 struct UsdFunctionCall; // This should be name a SdfLayerFunctionCall to be precise
 
