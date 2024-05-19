@@ -806,21 +806,23 @@ struct ConnectionsEditorCanvas { // rename to InfiniteCanvas ??
         //}
         if (widgetBoundingBox.Contains(ImGui::GetMousePos())) {
             // Click on the canvas TODO test bounding box
-            if (ImGui::IsMouseClicked(0)) {
+            if (ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
                 if (ImGui::IsKeyDown(ImGuiKey_LeftAlt)) {
                     event = Events::CANVAS_CLICKED_PANNING;
                 } else {
                     event = Events::CANVAS_CLICKED;
                 }
-            } else if (ImGui::IsMouseClicked(1)) {
+            } else if (ImGui::IsMouseClicked(ImGuiMouseButton_Right)) {
                 if (ImGui::IsKeyDown(ImGuiKey_LeftAlt)) {
                     event = Events::CANVAS_CLICKED_ZOOMING;
                     ImGuiIO& io = ImGui::GetIO();
-                    zoomClick = io.MouseClickedPos[ImGuiMouseButton_Left];
+                    zoomClick = io.MouseClickedPos[ImGuiMouseButton_Right];
                 }
-            } else if (ImGui::IsMouseReleased(0)) { // TODO Should be any button ??
+            } else if (ImGui::IsMouseReleased(0) || ImGui::IsMouseReleased(1)) { // TODO Should be any button ??
                 event = Events::CLICK_RELEASED;
             }
+        } else {
+            event = Events::CLICK_RELEASED;
         }
     }
     
@@ -1122,9 +1124,14 @@ struct ConnectionsEditorCanvas { // rename to InfiniteCanvas ??
             if (arrowHead != connectorPositions.end()) {
                 const auto arrowTail = connectorPositions.find(con.end);
                 if (arrowTail != connectorPositions.end()) {
-                    ImVec2 p2(arrowHead->second.x, arrowHead->second.y);
-                    ImVec2 p1(arrowTail->second.z, arrowTail->second.w);
-                    drawList->AddLine(CanvasToScreen(p1), CanvasToScreen(p2), IM_COL32(255, 255, 255, 255));
+                    ImVec2 p2a(arrowHead->second.x, arrowHead->second.y);
+                    ImVec2 p1a(arrowTail->second.z, arrowTail->second.w);
+                    ImVec2 p2b(arrowHead->second.x-150, arrowHead->second.y);
+                    ImVec2 p1b(arrowTail->second.z+150, arrowTail->second.w);
+                    ImVec2 mouse = ImGui::GetMousePos();
+                    auto color = IM_COL32(255, 255, 255, 255);
+                    //ImVec2 closest = ImBezierCubicClosestPointCasteljau(CanvasToScreen(p1a), CanvasToScreen(p1b), CanvasToScreen(p2b), CanvasToScreen(p2a), mouse, O.2);
+                    drawList->AddBezierCubic(CanvasToScreen(p1a), CanvasToScreen(p1b), CanvasToScreen(p2b), CanvasToScreen(p2a), color, 2);
                 }
             }
         }
@@ -1334,12 +1341,19 @@ void CreateSession(const UsdPrim &prim, const std::vector<UsdPrim> &prims) {
 
 void AddPrimsToCurrentSession(const std::vector<UsdPrim> &prims) {
     // Get the current sheet
-    if (!prims.empty()) {
+    std::vector<UsdPrim> all;
+    for (const auto &prim: prims) {
+        all.push_back(prim);
+        for (const auto &child: prim.GetAllDescendants()) {
+            all.push_back(child);
+        }
+    }
+    if (!all.empty()) {
         // Assuming all the prims are coming from the same stage
-        StageSheets *sbb = editorData.GetSheets(prims[0].GetStage());
+        StageSheets *sbb = editorData.GetSheets(all[0].GetStage());
         if (sbb) {
             ConnectionsSheet &bbs = sbb->GetSelectedSheet();
-            bbs.AddNodes(prims);
+            bbs.AddNodes(all);
         }
     }
 }
