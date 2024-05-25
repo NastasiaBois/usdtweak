@@ -24,7 +24,6 @@
 #include "Timeline.h"
 #include "ContentBrowser.h"
 #include "SdfPrimEditor.h"
-#include "Constants.h"
 #include "Commands.h"
 #include "ResourcesLoader.h"
 #include "SdfAttributeEditor.h"
