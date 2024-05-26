@@ -1,6 +1,6 @@
 #include "CameraRig.h"
 #include "Constants.h"
-#include <iostream>
+#include "GeometricFunctions.h"
 #include <pxr/base/gf/bbox3d.h>
 #include <pxr/base/gf/frustum.h>
 #include <pxr/base/gf/rotation.h>
@@ -78,20 +78,41 @@ void CameraRig::FrameBoundingBox(GfCamera &camera, const GfBBox3d &bbox) {
         return;
     }
 
-    RotationT rotation;
-    GfVec3d center;
-
-    FromCameraTransform(camera, _zUpMatrix, center, rotation, _dist);
-
-    center = bbox.ComputeCentroid();
-
-    auto bboxRange = bbox.ComputeAlignedRange();
-    auto rect = bboxRange.GetMax() - bboxRange.GetMin();
-    _selectionSize = std::max(rect[0], rect[1]) * 2; // This reset the selection size
-    auto fov = camera.GetFieldOfView(GfCamera::FOVHorizontal);
-    auto lengthToFit = _selectionSize * 0.5;
-    _dist = lengthToFit / atan(fov * 0.5 * (PI_F / 180.f));
-    ToCameraTransform(camera, _zUpMatrix, center, rotation, _dist);
+    if (camera.GetProjection() == GfCamera::Perspective) {
+        RotationT rotation;
+        GfVec3d center;
+        
+        FromCameraTransform(camera, _zUpMatrix, center, rotation, _dist);
+        
+        center = bbox.ComputeCentroid();
+        
+        auto bboxRange = bbox.ComputeAlignedRange();
+        auto rect = bboxRange.GetMax() - bboxRange.GetMin();
+        _selectionSize = std::max(rect[0], rect[1]) * 2; // This reset the selection size
+        auto fov = camera.GetFieldOfView(GfCamera::FOVHorizontal);
+        auto lengthToFit = _selectionSize * 0.5;
+        _dist = lengthToFit / atan(fov * 0.5 * (PI_F / 180.f));
+        ToCameraTransform(camera, _zUpMatrix, center, rotation, _dist);
+    } else { // Assuming Ortho case
+        // Move the viewpoint to the center of the bounding box
+        // TODO: We should make sure that the camera viewpoint ends up outside of all bounding boxes
+        // Unfortunately we don't have this information here, we know only the selected bbox,
+        // so by default we put the camera far away from it (hence the -10000) and with clipping plane centered around 0.
+        // This is not great and that could cause visible issues on larges scenes. We should get the whole scene bounding box
+        // so that we can correctly position and set clipping plane of internal cameras.
+        // This could be done when the user call "Fit camera"
+        const GfFrustum frustum = camera.GetFrustum();
+        GfMatrix4d mat = camera.GetTransform();
+        mat.SetTranslateOnly(bbox.ComputeCentroid() - 10000.f*frustum.ComputeViewDirection());
+        camera.SetTransform(mat);
+        
+        // Compute framing
+        const GfRange3d bboxRange = bbox.ComputeAlignedRange();
+        const GfVec3d frameSize = bboxRange.GetSize();
+        const float maxSize = fmax(frameSize[0], fmax(frameSize[1], frameSize[2]));
+        const float aspectRatio = camera.GetAspectRatio();
+        camera.SetOrthographicFromAspectRatioAndSize(aspectRatio, maxSize, aspectRatio > 1.f ? GfCamera::FOVVertical : GfCamera::FOVHorizontal);
+    }
 }
 
 // Updates the transform matrix of a GfCamera depending on the movement

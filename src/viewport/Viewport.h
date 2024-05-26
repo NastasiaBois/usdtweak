@@ -61,6 +61,7 @@ class Viewport final {
     
 
     inline bool IsEditingStageCamera() const { return _cameras.IsUsingStageCamera(); }
+    inline bool IsEditingInternalOrthoCamera() const { return _cameras.IsUsingInternalOrthoCamera(); }
     
     inline CameraManipulator &GetCameraManipulator() { return _cameraManipulator; }
 

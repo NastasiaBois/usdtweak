@@ -191,33 +191,33 @@ void Viewport::DrawManipulatorToolbox(const ImVec2 widgetPosition) {
     ImGui::SetCursorPosX(widgetPosition.x);
     
     if (ImGui::Button(ICON_FA_LOCATION_ARROW, buttonSize)) {
-        ChooseManipulator<MouseHoverManipulator>();
+        ExecuteAfterDraw<ViewportsSelectMouseHoverManipulator>();
     }
     ImGui::PopStyleColor();
 
     ImGui::PushStyleColor(ImGuiCol_Button, IsChosenManipulator<PositionManipulator>() ? selectedColor : defaultColor);
     ImGui::SetCursorPosX(widgetPosition.x);
     if (ImGui::Button(ICON_FA_ARROWS_ALT, buttonSize)) {
-        ChooseManipulator<PositionManipulator>();
+        ExecuteAfterDraw<ViewportsSelectPositionManipulator>();
     }
     ImGui::PopStyleColor();
 
     ImGui::PushStyleColor(ImGuiCol_Button, IsChosenManipulator<RotationManipulator>() ? selectedColor : defaultColor);
     ImGui::SetCursorPosX(widgetPosition.x);
     if (ImGui::Button(ICON_FA_SYNC_ALT, buttonSize)) {
-        ChooseManipulator<RotationManipulator>();
+        ExecuteAfterDraw<ViewportsSelectRotationManipulator>();
     }
     ImGui::PopStyleColor();
 
      ImGui::PushStyleColor(ImGuiCol_Button, IsChosenManipulator<ScaleManipulator>() ? selectedColor : defaultColor);
      ImGui::SetCursorPosX(widgetPosition.x);
     if (ImGui::Button(ICON_FA_COMPRESS, buttonSize)) {
-        ChooseManipulator<ScaleManipulator>();
+        ExecuteAfterDraw<ViewportsSelectScaleManipulator>();
     }
      ImGui::PopStyleColor();
 }
 
-/// Frane the viewport using the bounding box of the selection
+/// Frame the viewport using the bounding box of the selection
 void Viewport::FrameSelection(const Selection &selection) { // Camera manipulator ???
     if (GetCurrentStage() && !selection.IsSelectionEmpty(GetCurrentStage())) {
         UsdGeomBBoxCache bboxcache(_imagingSettings.frame, UsdGeomImageable::GetOrderedPurposeTokens());
@@ -252,13 +252,20 @@ GfVec2d Viewport::GetPickingBoundarySize() const {
 }
 
 //
-double Viewport::ComputeScaleFactor(const GfVec3d& objectPos, const double multiplier) const {
+double Viewport::ComputeScaleFactor(const GfVec3d &objectPos, const double multiplier) const {
     double scale = 1.0;
     const auto &frustum = GetCurrentCamera().GetFrustum();
     auto ray = frustum.ComputeRay(GfVec2d(0, 0)); // camera axis
     ray.FindClosestPoint(objectPos, &scale);
-    const float focalLength = GetCurrentCamera().GetFocalLength();
-    scale /= focalLength == 0 ? 1.f : focalLength;
+    // TODO Ortho case: should the scale be based on the larger/smaller side ?
+    if (GetCurrentCamera().GetProjection() == GfCamera::Orthographic) {
+        const float verticalAperture = GetCurrentCamera().GetVerticalAperture();
+        scale = 0.01 * verticalAperture;
+
+    } else {
+        const float focalLength = GetCurrentCamera().GetFocalLength();
+        scale /= focalLength == 0 ? 1.f : focalLength;
+    }
     scale /= multiplier;
     scale *= 2;
     return scale;
@@ -274,7 +281,7 @@ void Viewport::HandleKeyboardShortcut() {
         static bool SelectionManipulatorPressedOnce = true;
         if (ImGui::IsKeyDown(ImGuiKey_Q) && ! IsModifierDown() ) {
             if (SelectionManipulatorPressedOnce) {
-                ChooseManipulator<MouseHoverManipulator>();
+                ExecuteAfterDraw<ViewportsSelectMouseHoverManipulator>();
                 SelectionManipulatorPressedOnce = false;
             }
         } else {
@@ -284,7 +291,7 @@ void Viewport::HandleKeyboardShortcut() {
         static bool PositionManipulatorPressedOnce = true;
         if (ImGui::IsKeyDown(ImGuiKey_W) && ! IsModifierDown() ) {
             if (PositionManipulatorPressedOnce) {
-                ChooseManipulator<PositionManipulator>();
+                ExecuteAfterDraw<ViewportsSelectPositionManipulator>();
                 PositionManipulatorPressedOnce = false;
             }
         } else {
@@ -294,7 +301,7 @@ void Viewport::HandleKeyboardShortcut() {
         static bool RotationManipulatorPressedOnce = true;
         if (ImGui::IsKeyDown(ImGuiKey_E) && ! IsModifierDown() ) {
             if (RotationManipulatorPressedOnce) {
-                ChooseManipulator<RotationManipulator>();
+                ExecuteAfterDraw<ViewportsSelectRotationManipulator>();
                 RotationManipulatorPressedOnce = false;
             }
         } else {
@@ -304,7 +311,7 @@ void Viewport::HandleKeyboardShortcut() {
         static bool ScaleManipulatorPressedOnce = true;
         if (ImGui::IsKeyDown(ImGuiKey_R) && ! IsModifierDown() ) {
             if (ScaleManipulatorPressedOnce) {
-                ChooseManipulator<ScaleManipulator>();
+                ExecuteAfterDraw<ViewportsSelectScaleManipulator>();
                 ScaleManipulatorPressedOnce = false;
             }
         } else {
