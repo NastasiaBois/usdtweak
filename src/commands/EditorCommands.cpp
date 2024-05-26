@@ -410,14 +410,14 @@ struct EditorExportFlattenedStage : public EditorCommand {
 };
 template void ExecuteAfterDraw<EditorExportFlattenedStage>(const std::string);
 
-struct ViewportsSelectMouseOverManipulator : public EditorCommand {
-    ViewportsSelectMouseOverManipulator() {}
+struct ViewportsSelectMouseHoverManipulator : public EditorCommand {
+    ViewportsSelectMouseHoverManipulator() {}
     bool DoIt() override {
         _editor->SelectMouseHoverManipulator();
         return false;
     }
 };
-template void ExecuteAfterDraw<ViewportsSelectMouseOverManipulator>();
+template void ExecuteAfterDraw<ViewportsSelectMouseHoverManipulator>();
 
 
 struct ViewportsSelectPositionManipulator : public EditorCommand {

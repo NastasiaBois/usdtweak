@@ -101,7 +101,7 @@ static void DockingToolbar(const char* name, Viewport &viewport, ImGuiAxis* p_to
 
     ImGui::PushStyleColor(ImGuiCol_Button, viewport.IsChosenManipulator<MouseHoverManipulator>() ? selectedColor : defaultColor);
     if (ImGui::Button(ICON_FA_LOCATION_ARROW, icon_size)) {
-        ExecuteAfterDraw<ViewportsSelectMouseOverManipulator>();
+        ExecuteAfterDraw<ViewportsSelectMouseHoverManipulator>();
     }
     ImGui::PopStyleColor();
     if (toolbar_axis == ImGuiAxis_X)
