@@ -8,8 +8,8 @@
 PXR_NAMESPACE_USING_DIRECTIVE
 //
 // Manage and store the cameras owned by a viewport.
-// A cameras can be a stage camera or an internal viewport camera.
-// Only perspective iternal camera is implemented as of now.
+// A camera can be a stage camera or an internal viewport camera.
+// There are 2 kinds of internal cameras: perspective and ortho
 //
 // This class also provide a UI to select the current camera.
 //
@@ -43,7 +43,7 @@ public:
     const GfCamera & GetCurrentCamera() const { return *_renderCamera; }
        
     //
-    const SdfPath & GetStageCameraPath() const ;
+    const SdfPath & GetStageCameraPath() const;
 
     // Used in the manipulators for editing stage
     // TODO IsEditingStageCamera()
@@ -51,36 +51,47 @@ public:
         return _currentConfig->_renderCameraType == StageCamera;
     }
     
+    inline bool IsUsingInternalOrthoCamera () const {
+        return _currentConfig->_renderCameraType != StageCamera
+            && _currentConfig->_renderCameraType != ViewportPerspective;
+    }
+
 private:
     inline bool IsPerspective() const { return _currentConfig->_renderCameraType == ViewportPerspective;}
-   
+    inline bool IsTop() const { return _currentConfig->_renderCameraType == ViewportTop;}
+    inline bool IsBottom() const { return _currentConfig->_renderCameraType == ViewportBottom;}
+    
+    typedef enum CameraType {ViewportPerspective, ViewportTop, ViewportBottom, StageCamera} CameraType;
+    
     // Set a new Stage camera path
     void UseStageCamera(const UsdStageRefPtr &stage, const SdfPath &cameraPath);
     
-    // Set the viewport camera
-    void UseViewportPerspCamera(const UsdStageRefPtr &stage);
-
+    // Use an internal camera
+    void UseInternalCamera(const UsdStageRefPtr &stage, CameraType cameraType);
+    
     // Points to a valid camera, stage or perspective that we share with the rest of the application
     GfCamera *_renderCamera;
-    // Points to the current persp camera belonging to the stage
-    GfCamera *_perspCamera;
     // A copy of the current stage camera used for editing
     GfCamera _stageCamera;
     // Keep track of the current stage to know when the stage has changed
     UsdStageRefPtr _currentStage;
     
-    
     // Common to all stages, the perpective and ortho cams
     struct OwnedCameras {
+        OwnedCameras ();
+        // Persp camera
         GfCamera _perspectiveCamera;
-        // TODO Ortho cameras
+        // Ortho cameras
+        GfCamera _topCamera;
+        GfCamera _bottomCamera;
     };
     
+    // We could also copy instead of referencing the cam ...
+    OwnedCameras *_ownedCameras;
     
     // Internal viewport cameras
     static std::unordered_map<std::string, OwnedCameras> _viewportCamerasPerStage;
 
-    enum CameraType {ViewportPerspective, StageCamera};
     struct CameraConfiguration {
         SdfPath _stageCameraPath = SdfPath::EmptyPath();
         // we keep track of the render camera type

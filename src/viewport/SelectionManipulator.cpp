@@ -79,4 +79,7 @@ void DrawPickMode(SelectionManipulator &manipulator) {
         }
         ImGui::EndCombo();
     }
+    if (ImGui::IsItemHovered() && GImGui->HoveredIdTimer > 1) {
+        ImGui::SetTooltip("Pick mode");
+    }
 }

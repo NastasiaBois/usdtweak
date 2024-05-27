@@ -5,16 +5,13 @@
 #include <pxr/usd/sdf/layer.h>
 #include <pxr/usd/sdf/primSpec.h>
 #include <pxr/usd/usdUtils/stageCache.h>
-
+#include "Constants.h"
 #include <set>
 #include <future>
 
 struct GLFWwindow;
 
 PXR_NAMESPACE_USING_DIRECTIVE
-
-// Experimental
-#define ENABLE_MULTIPLE_VIEWPORTS 0
 
 /// Editor contains the data shared between widgets, like selections, stages, etc etc
 class Editor {

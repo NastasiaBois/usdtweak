@@ -78,3 +78,6 @@ constexpr int ERROR_UNABLE_TO_COMPILE_SHADER = 110;
 #define ICON_UT_STAGE ICON_FA_BARS
 
 #define DefaultColorStyle  ImGuiCol_Text, ImVec4(ColorImGuiText), ImGuiCol_Button, ImVec4(ColorImGuiButton), ImGuiCol_FrameBg, ImVec4(ColorImGuiFrameBg)
+
+// Experimental work in progress features
+#define ENABLE_MULTIPLE_VIEWPORTS 0

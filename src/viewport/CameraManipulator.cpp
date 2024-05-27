@@ -28,7 +28,7 @@ Manipulator *CameraManipulator::OnUpdate(Viewport &viewport) {
         return viewport.GetManipulator<MouseHoverManipulator>();
     } else if (ImGui::IsMouseReleased(1) || ImGui::IsMouseReleased(2) || ImGui::IsMouseReleased(0)) {
         SetMovementType(MovementType::None);
-    } else if (ImGui::IsMouseClicked(0)) {
+    } else if (ImGui::IsMouseClicked(0) && !viewport.IsEditingInternalOrthoCamera()) {
         SetMovementType(MovementType::Orbit);
     } else if (ImGui::IsMouseClicked(2)) {
         SetMovementType(MovementType::Truck);
@@ -36,13 +36,20 @@ Manipulator *CameraManipulator::OnUpdate(Viewport &viewport) {
         SetMovementType(MovementType::Dolly);
     }
     auto &currentCamera = viewport.GetEditableCamera();
+    // TODO: we could make a different camera manipulator for the ortho case instead of testing the camera type here
+    // as we don't need some off the movement types
+    // TODO: Remove move ortho cam, just skip if internal and orbit
+//    if (viewport.IsEditingInternalOrthoCamera()) {
+//        MoveOrthoCamera(currentCamera, io.MouseDelta.x, io.MouseDelta.y);
+//    } else {
 
-    if (Move(currentCamera, io.MouseDelta.x, io.MouseDelta.y)) {
-        if (viewport.IsEditingStageCamera() && _stageCamera) {
-            // This is going to fill the undo/redo buffer :S
-            _stageCamera.SetFromCamera(currentCamera, viewport.GetCurrentTimeCode());
+        if (Move(currentCamera, io.MouseDelta.x, io.MouseDelta.y)) {
+            if (viewport.IsEditingStageCamera() && _stageCamera) {
+                // This is going to fill the undo/redo buffer :S
+                _stageCamera.SetFromCamera(currentCamera, viewport.GetCurrentTimeCode());
+            }
         }
-    }
+//    }
 
     return this;
 }

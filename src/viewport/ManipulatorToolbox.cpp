@@ -76,6 +76,7 @@ static void DockingToolbar(const char* name, Viewport &viewport, ImGuiAxis* p_to
     // 3. Begin into the window
     const float font_size = ImGui::GetFontSize();
     const ImVec2 icon_size(ImFloor(font_size * 1.7f), ImFloor(font_size * 1.7f));
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, toolbar_axis == ImGuiAxis_X ? ImVec2(10.f, 2.0f) : ImVec2(2.0f, 10.0f));
     ImGui::Begin(name, NULL, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar);
 
     // 4. Overwrite node size
@@ -100,7 +101,7 @@ static void DockingToolbar(const char* name, Viewport &viewport, ImGuiAxis* p_to
 
     ImGui::PushStyleColor(ImGuiCol_Button, viewport.IsChosenManipulator<MouseHoverManipulator>() ? selectedColor : defaultColor);
     if (ImGui::Button(ICON_FA_LOCATION_ARROW, icon_size)) {
-        ExecuteAfterDraw<ViewportsSelectMouseOverManipulator>();
+        ExecuteAfterDraw<ViewportsSelectMouseHoverManipulator>();
     }
     ImGui::PopStyleColor();
     if (toolbar_axis == ImGuiAxis_X)
@@ -145,6 +146,7 @@ static void DockingToolbar(const char* name, Viewport &viewport, ImGuiAxis* p_to
     }
 
     ImGui::End();
+    ImGui::PopStyleVar();
 
     // Output user stored data
     *p_toolbar_axis = toolbar_axis;
