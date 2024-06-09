@@ -10,6 +10,10 @@
 static const std::string PerspectiveStr("Persp");
 static const std::string TopStr("Top");
 static const std::string BottomStr("Bottom");
+static const std::string LeftStr("Left");
+static const std::string RightStr("Right");
+static const std::string FrontStr("Front");
+static const std::string BackStr("Back");
 
 static void DrawViewportCameraEditor(GfCamera &camera, const UsdStageRefPtr &stage) {
     float focal = camera.GetFocalLength();
@@ -64,17 +68,23 @@ static void DrawUsdGeomCameraEditor(const UsdGeomCamera &usdGeomCamera, UsdTimeC
     }
 }
 
+inline
+void InitOrthoCamera(GfCamera &cam, const GfVec3d &axis, double angle, const GfVec3d &translate) {
+    GfMatrix4d mat;
+    cam.SetProjection(GfCamera::Orthographic);
+    cam.SetClippingRange({0.1, 20000.f});
+    mat.SetTransform(GfRotation(axis, angle), translate);
+    cam.SetTransform(mat);
+}
+
 ViewportCameras::OwnedCameras::OwnedCameras () {
     GfMatrix4d mat;
-    _topCamera.SetProjection(GfCamera::Orthographic);
-    _topCamera.SetClippingRange({0.1, 20000.f});
-    mat.SetTransform(GfRotation({1.0, 0.0, 0.0}, -90.f), {0.0, 10000.f, 0.0});
-    _topCamera.SetTransform(mat);
-    
-    _bottomCamera.SetProjection(GfCamera::Orthographic);
-    _bottomCamera.SetClippingRange({0.1, 20000.f});
-    mat.SetTransform(GfRotation({1.0, 0.0, 0.0}, 90.f), {0.0, -10000.f, 0.0});
-    _bottomCamera.SetTransform(mat);
+    InitOrthoCamera(_topCamera, {1.0, 0.0, 0.0}, -90.f, {0.0, 10000.f, 0.0});
+    InitOrthoCamera(_bottomCamera, {1.0, 0.0, 0.0}, 90.f, {0.0, -10000.f, 0.0});
+    InitOrthoCamera(_leftCamera, {0.0, 1.0, 0.0}, -90.f, {10000.0, 0.0, 0.0});
+    InitOrthoCamera(_rightCamera, {0.0, 1.0, 0.0}, 90.f, {-10000.f, 0.0, 0.0});
+    InitOrthoCamera(_frontCamera, {0.0, 1.0, 0.0}, 0, {0.0, 0.0, -10000.f});
+    InitOrthoCamera(_backCamera, {0.0, 1.0, 0.0}, 180.f, {0.0, 0.0, 10000.f});
 }
 
 std::unordered_map<std::string, ViewportCameras::OwnedCameras> ViewportCameras::_viewportCamerasPerStage = {};
@@ -119,6 +129,18 @@ void ViewportCameras::UseInternalCamera(const UsdStageRefPtr &stage, CameraType 
             break;
         case ViewportBottom:
             _renderCamera = &_ownedCameras->_bottomCamera;
+            break;
+        case ViewportLeft:
+            _renderCamera = &_ownedCameras->_leftCamera;
+            break;
+        case ViewportRight:
+            _renderCamera = &_ownedCameras->_rightCamera;
+            break;
+        case ViewportFront:
+            _renderCamera = &_ownedCameras->_frontCamera;
+            break;
+        case ViewportBack:
+            _renderCamera = &_ownedCameras->_backCamera;
             break;
         default:
             assert("ViewportCameras: unknown camera type" && false);
@@ -190,6 +212,14 @@ std::string ViewportCameras::GetCurrentCameraName() const {
         return TopStr;
     } else if (IsBottom()) {
         return BottomStr;
+    } else if (IsRight()) {
+        return RightStr;
+    } else if (IsLeft()) {
+        return LeftStr;
+    } else if (IsFront()) {
+        return FrontStr;
+    } else if (IsBack()) {
+        return BackStr;
     } else {
         return _currentConfig->_stageCameraPath.GetName();
     }
@@ -203,13 +233,21 @@ void ViewportCameras::DrawCameraList(const UsdStageRefPtr &stage) {
         UseInternalCamera(stage, ViewportPerspective);
     }
     ImGui::SameLine();
-    ImGui::Button("Front");
+    if (ImGui::Button("Front")) {
+        UseInternalCamera(stage, ViewportFront);
+    }
     ImGui::SameLine();
-    ImGui::Button("Back");
+    if (ImGui::Button("Back")) {
+        UseInternalCamera(stage, ViewportBack);
+    }
     ImGui::SameLine();
-    ImGui::Button("Left");
+    if (ImGui::Button("Left")) {
+        UseInternalCamera(stage, ViewportLeft);
+    }
     ImGui::SameLine();
-    ImGui::Button("Right");
+    if (ImGui::Button("Right")) {
+        UseInternalCamera(stage, ViewportRight);
+    }
     ImGui::SameLine();
     if (ImGui::Button("Top")) {
         UseInternalCamera(stage, ViewportTop);
