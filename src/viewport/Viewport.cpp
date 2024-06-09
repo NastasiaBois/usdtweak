@@ -470,13 +470,12 @@ void Viewport::SetCurrentTimeCode(const UsdTimeCode &tc) {
 /// Update anything that could have change after a frame render
 void Viewport::Update() {
     if (GetCurrentStage()) {
+        bool newStage = false;
         auto whichRenderer = _renderers.find(GetCurrentStage()); /// We expect a very limited number of opened stages
         if (whichRenderer == _renderers.end()) {
+            newStage = true;
             SdfPathVector excludedPaths;
             _renderer = new UsdImagingGLEngine(GetCurrentStage()->GetPseudoRoot().GetPath(), excludedPaths);
-            if (_renderers.empty()) {
-                FrameRootPrim();
-            }
             _renderers[GetCurrentStage()] = _renderer;
             _cameraManipulator.SetZIsUp(UsdGeomGetStageUpAxis(GetCurrentStage()) == "Z");
             _grid.SetZIsUp(UsdGeomGetStageUpAxis(GetCurrentStage()) == "Z");
@@ -493,6 +492,11 @@ void Viewport::Update() {
         // Update cameras state, this will assign the user selected camera for the current stage at
         // a particular time
         _cameras.Update(GetCurrentStage(), GetCurrentTimeCode());
+        if (newStage) { //TODO C++20 [[unlikely]]
+            // TODO: framing should probably move in the update as we want to also frame when an
+            // internal ortho camera is selected
+            FrameRootPrim();
+        }
     }
 
     const GfVec2i &currentSize = _drawTarget->GetSize();
