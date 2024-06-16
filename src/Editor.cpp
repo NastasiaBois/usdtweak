@@ -950,7 +950,7 @@ void Editor::Draw() {
     if (_settings._showLayerStackEditor) {
         TRACE_SCOPE(SdfLayerStackWindowTitle);
         const std::string title(SdfLayerStackWindowTitle "###Layer stack");
-        ImGui::Begin(title.c_str(), &_settings._showLayerStackEditor, layerWindowFlag);
+        ImGui::Begin(title.c_str(), &_settings._showLayerStackEditor);
         //DrawLayerSublayerStack(rootLayer);
         DrawStageLayerEditor(GetCurrentStage());
         ImGui::End();
