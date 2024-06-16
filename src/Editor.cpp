@@ -100,13 +100,13 @@ struct AboutModalDialog : public ModalDialog {
         ImGui::Text("https://github.com/cpichard/usdtweak/issues");
         ImGui::Text("or by mail: cpichard.github@gmail.com");
         ImGui::Text("");
-        ImGui::Text("usdtweak - Copyright (c) 2016-2023 Cyril Pichard - Apache License 2.0");
+        ImGui::Text("usdtweak - Copyright (c) 2016-2024 Cyril Pichard - Apache License 2.0");
         ImGui::Text("");
         ImGui::Text("USD " USD_VERSION " - https://github.com/PixarAnimationStudios/USD");
-        ImGui::Text("   Copyright (c) 2016-2023 Pixar - Modified Apache 2.0 License");
+        ImGui::Text("   Copyright (c) 2016-2024 Pixar - Modified Apache 2.0 License");
         ImGui::Text("");
         ImGui::Text("IMGUI - https://github.com/ocornut/imgui");
-        ImGui::Text("   Copyright (c) 2014-2023 Omar Cornut - The MIT License (MIT)");
+        ImGui::Text("   Copyright (c) 2014-2024 Omar Cornut - The MIT License (MIT)");
         ImGui::Text("");
         ImGui::Text("GLFW - https://www.glfw.org/");
         ImGui::Text("   Copyright © 2002-2006 Marcus Geelnard - The zlib/libpng License ");
