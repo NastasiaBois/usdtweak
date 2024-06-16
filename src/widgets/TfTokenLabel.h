@@ -6,7 +6,9 @@ inline
 const char * GetTokenLabel(const TfToken &token) {
     if (token == SdfFieldKeys->CustomData) {
         return "Custom Data";
-    } else if (token == SdfFieldKeys->AssetInfo) {
+    } else if (token == SdfFieldKeys->CustomLayerData) {
+        return "Custom Layer Data";
+    }else if (token == SdfFieldKeys->AssetInfo) {
         return "Asset Info";
     } // add others as needed
     return token.GetText();
