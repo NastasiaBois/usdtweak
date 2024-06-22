@@ -37,6 +37,7 @@
 #include "UsdHelpers.h"
 #include "Stamp.h"
 #include "ManipulatorToolbox.h"
+#include "HydraBrowser.h"
 
 namespace clk = std::chrono;
 
@@ -56,6 +57,7 @@ namespace clk = std::chrono;
 #define SdfPrimPropertiesWindowTitle "Layer property editor"
 #define SdfLayerAsciiEditorWindowTitle "Layer text editor"
 #define SdfAttributeWindowTitle "Attribute editor"
+#define HydraBrowserWindowTitle "Hydra browser"
 #define TimelineWindowTitle "Timeline"
 #define Viewport1WindowTitle "Viewport1"
 #define Viewport2WindowTitle "Viewport2"
@@ -799,6 +801,7 @@ void Editor::DrawMainMenuBar() {
             ImGui::MenuItem(SdfPrimPropertiesWindowTitle, nullptr, &_settings._showPrimSpecEditor);
             ImGui::MenuItem(SdfLayerAsciiEditorWindowTitle, nullptr, &_settings._textEditor);
             ImGui::MenuItem(SdfAttributeWindowTitle, nullptr, &_settings._showSdfAttributeEditor);
+            ImGui::MenuItem(HydraBrowserWindowTitle, nullptr, &_settings._showHydraBrowser);
             ImGui::MenuItem(TimelineWindowTitle, nullptr, &_settings._showTimeline);
             ImGui::MenuItem(Viewport1WindowTitle, nullptr, &_settings._showViewport1);
 #if ENABLE_MULTIPLE_VIEWPORTS
@@ -1017,6 +1020,13 @@ void Editor::Draw() {
         ImGui::End();
     }
 
+    if (_settings._showHydraBrowser) {
+        TRACE_SCOPE(HydraBrowserWindowTitle);
+        ImGui::Begin(HydraBrowserWindowTitle);
+        DrawHydraBrowser();
+        ImGui::End();
+    }
+    
     DrawCurrentModal();
 
     ///////////////////////
