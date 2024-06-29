@@ -1022,7 +1022,7 @@ void Editor::Draw() {
 
     if (_settings._showHydraBrowser) {
         TRACE_SCOPE(HydraBrowserWindowTitle);
-        ImGui::Begin(HydraBrowserWindowTitle);
+        ImGui::Begin(HydraBrowserWindowTitle, &_settings._showHydraBrowser);
         DrawHydraBrowser();
         ImGui::End();
     }

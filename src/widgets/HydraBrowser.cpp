@@ -1,26 +1,26 @@
-#include "Constants.h"
-#include "ImGuiHelpers.h"
-#include "Gui.h"
 #include "HydraBrowser.h"
-
-#include <stack>
+#include "Constants.h"
+#include "Gui.h"
+#include "ImGuiHelpers.h"
+#include "VtValueEditor.h"
 #include <iostream>
 #include <pxr/pxr.h> // for PXR_VERSION
+#include <stack>
 
 #if PXR_VERSION < 2302
-void DrawHydraBrowser() {
-    ImGui::Text("Hydra browser is not supported in this version of USD ");
-}
+void DrawHydraBrowser() { ImGui::Text("Hydra browser is not supported in this version of USD "); }
 #else
 
 #include <pxr/imaging/hd/filteringSceneIndex.h>
+#include <pxr/imaging/hd/retainedDataSource.h>
+
 PXR_NAMESPACE_USING_DIRECTIVE
 #define HydraBrowserSeed 5343934
 #define IdOf ToImGuiID<HydraBrowserSeed, size_t>
 
 inline void DrawSceneIndexSelector(std::string &selectedSceneIndexName, std::string &selectedInputName) {
     if (ImGui::BeginCombo("Select scene index", selectedSceneIndexName.c_str())) {
-        for(const auto &name : HdSceneIndexNameRegistry::GetInstance().GetRegisteredNames()) {
+        for (const auto &name : HdSceneIndexNameRegistry::GetInstance().GetRegisteredNames()) {
             if (ImGui::Selectable(name.c_str())) {
                 selectedSceneIndexName = name;
                 selectedInputName = "";
@@ -32,49 +32,47 @@ inline void DrawSceneIndexSelector(std::string &selectedSceneIndexName, std::str
 
 static void DrawSceneIndexFilterSelector(std::string &selectedSceneIndexName, HdSceneIndexBasePtr &inputIndex) {
     HdSceneIndexBaseRefPtr sceneIndex = HdSceneIndexNameRegistry::GetInstance().GetNamedSceneIndex(selectedSceneIndexName);
-    
+
     if (sceneIndex) {
         const std::string selectedInputName = inputIndex ? inputIndex->GetDisplayName() : "";
         if (ImGui::BeginCombo("Select filter", selectedInputName.c_str())) {
-            HdFilteringSceneIndexBaseRefPtr currentSceneIndex =
-                    TfDynamic_cast<HdFilteringSceneIndexBaseRefPtr>(sceneIndex);
+            HdFilteringSceneIndexBaseRefPtr currentSceneIndex = TfDynamic_cast<HdFilteringSceneIndexBaseRefPtr>(sceneIndex);
             if (currentSceneIndex) {
                 const std::vector<HdSceneIndexBaseRefPtr> &inputScenes = currentSceneIndex->GetInputScenes();
                 std::stack<HdSceneIndexBaseRefPtr> st;
                 std::vector<int> level;
-                for(const auto &scene:inputScenes) {
+                for (const auto &scene : inputScenes) {
                     st.push(scene);
                     level.push_back(1);
                 }
-                while (!st.empty()){
+                while (!st.empty()) {
                     HdSceneIndexBaseRefPtr scene = st.top();
                     st.pop();
                     level.back()--;
                     if (scene) {
                         std::string label;
-                        for (int i=0; i<level.size(); ++i) {
+                        for (int i = 0; i < level.size(); ++i) {
                             label += "  ";
                         }
                         label += scene->GetDisplayName();
                         if (ImGui::Selectable(label.c_str(), selectedInputName == scene->GetDisplayName())) {
                             inputIndex = scene;
                         }
-                        
-                        HdFilteringSceneIndexBaseRefPtr filteringIndex =
-                                TfDynamic_cast<HdFilteringSceneIndexBaseRefPtr>(scene);
+
+                        HdFilteringSceneIndexBaseRefPtr filteringIndex = TfDynamic_cast<HdFilteringSceneIndexBaseRefPtr>(scene);
                         if (filteringIndex) {
                             const std::vector<HdSceneIndexBaseRefPtr> &inputs = filteringIndex->GetInputScenes();
                             if (!inputs.empty()) {
                                 level.push_back(0);
-                                for (const auto &input:inputs) {
+                                for (const auto &input : inputs) {
                                     st.push(input);
                                     level.back()++;
                                 }
                             }
                         }
                     }
-                    if (level.back()==0) {
-                        level.resize(level.size()-1);
+                    if (level.back() == 0) {
+                        level.resize(level.size() - 1);
                     }
                 }
             }
@@ -87,17 +85,19 @@ static void DrawSceneIndexFilterSelector(std::string &selectedSceneIndexName, Hd
     return inputIndex;
 }
 
-static void DrawSceneIndexTreeView(HdSceneIndexBasePtr inputIndex, const std::string &selectedInputName, SdfPath &selectedPrimIndexPath){
+static void DrawSceneIndexTreeView(HdSceneIndexBasePtr inputIndex, const std::string &selectedInputName,
+                                   SdfPath &selectedPrimIndexPath) {
     if (inputIndex) {
         // Get all the opened paths in a vector
         ImGuiWindow *currentWindow = ImGui::GetCurrentWindow();
-        ImVec2 tableOuterSize(currentWindow->Size[0]/2, currentWindow->Size[1] - 100); // TODO: set the correct size
-        constexpr ImGuiTableFlags tableFlags = ImGuiTableFlags_SizingFixedFit | /*ImGuiTableFlags_RowBg |*/ ImGuiTableFlags_ScrollY;
-        constexpr ImGuiTreeNodeFlags rowFlags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_AllowItemOverlap;
+        ImVec2 tableOuterSize(currentWindow->Size[0], currentWindow->Size[1] - 100); // TODO: set the correct size
+        constexpr ImGuiTableFlags tableFlags =
+            ImGuiTableFlags_SizingFixedFit | /*ImGuiTableFlags_RowBg |*/ ImGuiTableFlags_ScrollY;
+
         if (ImGui::BeginTable("##DrawSceneIndexHierarchy", 2, tableFlags, tableOuterSize)) {
             ImGui::TableSetupColumn("Hierarchy");
             ImGui::TableSetupColumn("Type");
-            
+
             ImGuiContext &g = *GImGui;
             ImGuiWindow *window = g.CurrentWindow;
             ImGuiStorage *storage = window->DC.StateStorage;
@@ -105,14 +105,14 @@ static void DrawSceneIndexTreeView(HdSceneIndexBasePtr inputIndex, const std::st
             std::vector<SdfPath> paths;
             std::stack<SdfPath> st;
             st.push(SdfPath::AbsoluteRootPath());
-            while(!st.empty()) {
+            while (!st.empty()) {
                 const SdfPath &current = st.top();
                 const ImGuiID pathHash = IdOf(current.GetHash());
                 const bool isOpen = storage->GetInt(pathHash, 0) != 0;
                 paths.push_back(current);
                 st.pop();
                 if (isOpen) {
-                    for (const SdfPath &path: inputIndex->GetChildPrimPaths(current)) {
+                    for (const SdfPath &path : inputIndex->GetChildPrimPaths(current)) {
                         st.push(path);
                     }
                 }
@@ -128,7 +128,12 @@ static void DrawSceneIndexTreeView(HdSceneIndexBasePtr inputIndex, const std::st
                     ImGui::TableSetColumnIndex(0);
                     bool unfolded = true;
                     {
-                        // TODO remove triangle when leaf
+                        //
+                        ImGuiTreeNodeFlags rowFlags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_AllowItemOverlap;
+                        if (inputIndex->GetChildPrimPaths(path).empty()) {
+                            rowFlags |= ImGuiTreeNodeFlags_Leaf;
+                        }
+
                         // TODO draw node type
                         TreeIndenter<HydraBrowserSeed, SdfPath> indenter(path);
                         const ImGuiID pathHash = IdOf(GetHash(path));
@@ -152,26 +157,73 @@ static void DrawSceneIndexTreeView(HdSceneIndexBasePtr inputIndex, const std::st
     }
 }
 
-static void DrawPrimParameters(HdSceneIndexBasePtr inputIndex, const SdfPath &selectedPrimIndexPath) {
-    if (inputIndex && selectedPrimIndexPath!=SdfPath::AbsoluteRootPath()) {
+static void DrawDataSourceRecursively(const std::string &dataSourceName, HdDataSourceBaseHandle dataSource) {
+    if (dataSource) {
+        HdContainerDataSourceHandle container = HdContainerDataSource::Cast(dataSource);
+        bool unfolded = false;
+        ImGuiTreeNodeFlags rowFlags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_AllowItemOverlap;
+        if (container) {
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            if (container->GetNames().empty()) {
+                rowFlags |= ImGuiTreeNodeFlags_Leaf;
+            }
+
+            unfolded = ImGui::TreeNodeEx(dataSourceName.c_str(), rowFlags);
+            if (unfolded) {
+                for (const TfToken &childName : container->GetNames()) {
+                    DrawDataSourceRecursively(childName.GetString(), container->Get(childName));
+                }
+            }
+        } else {
+            HdSampledDataSourceHandle sampled = HdSampledDataSource::Cast(dataSource);
+            if (sampled) {
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+                ImGui::Selectable(dataSourceName.c_str());
+                ImGui::TableSetColumnIndex(1);
+                // TODO readonly DrawVtValue as we don't want the user thinking he can change the values here
+                DrawVtValue("##" + dataSourceName, sampled->GetValue(0));
+            } else {
+                HdVectorDataSourceHandle vectorSource = HdVectorDataSource::Cast(dataSource);
+                if (vectorSource) {
+                    ImGui::TableNextRow();
+                    ImGui::TableSetColumnIndex(0);
+                    rowFlags |= vectorSource->GetNumElements() == 0 ? ImGuiTreeNodeFlags_None : ImGuiTreeNodeFlags_Leaf;
+                    unfolded = ImGui::TreeNodeEx(dataSourceName.c_str(), rowFlags);
+                    if (unfolded) {
+                        for (size_t i = 0; i < vectorSource->GetNumElements(); ++i) {
+                            DrawDataSourceRecursively(std::to_string(i), vectorSource->GetElement(i));
+                        }
+                    }
+                } else {
+                    // Other types ???
+                }
+            }
+        }
+        if (unfolded) {
+            ImGui::TreePop();
+        }
+    }
+}
+
+static void DrawSceneIndexPrimParameters(HdSceneIndexBasePtr inputIndex, const SdfPath &selectedPrimIndexPath) {
+    if (inputIndex && selectedPrimIndexPath != SdfPath::AbsoluteRootPath()) {
         // We could have added the parameters directly in the prim tree but to find the actual parameter type
         // we need to Cast it to all the potential hydra class known and, worse case, it could happen
         // for each frame and for all the parameters of the scene. So we just consider the selected parameter
-        if (ImGui::BeginTable("##DrawHydraParameter", 2)) {
+        ImGuiWindow *currentWindow = ImGui::GetCurrentWindow();
+        ImVec2 tableOuterSize(currentWindow->Size[0], currentWindow->Size[1] - 100); // TODO: set the correct size
+        constexpr ImGuiTableFlags tableFlags =
+            ImGuiTableFlags_SizingFixedFit | /*ImGuiTableFlags_RowBg |*/ ImGuiTableFlags_ScrollY;
+        
+        if (ImGui::BeginTable("##DrawHydraParameter", 2, tableFlags, tableOuterSize)) {
             ImGui::TableSetupColumn("Name");
             ImGui::TableSetupColumn("Value");
-            
             ImGui::TableHeadersRow();
-
             HdSceneIndexPrim siPrim = inputIndex->GetPrim(selectedPrimIndexPath);
             if (siPrim.dataSource) {
-                for (const TfToken &tk: siPrim.dataSource->GetNames()) {
-                    // TODO tree of parameters depending on the data source class
-                    ImGui::TableNextRow();
-                    ImGui::TableSetColumnIndex(0);
-                    ImGui::Selectable(tk.GetText());
-                    // TODO : draw value
-                }
+                DrawDataSourceRecursively(selectedPrimIndexPath.GetName(), siPrim.dataSource);
             }
             ImGui::EndTable();
         }
@@ -185,8 +237,24 @@ void DrawHydraBrowser() {
     static HdSceneIndexBasePtr selectedFilter;
     DrawSceneIndexSelector(selectedSceneIndexName, selectedInputName);
     DrawSceneIndexFilterSelector(selectedSceneIndexName, selectedFilter);
+    
+    
+    // TODO Splitter layout
+    // TODO use ImGuiChildFlags_Border| ImGuiChildFlags_ResizeX with more recent version of imgui
+    ImGuiWindow *currentWindow = ImGui::GetCurrentWindow();
+    int height = currentWindow->Size[1] - 100;
+    static float size1= 0.f;
+    static float size2= 0.f;
+    size1 = currentWindow->Size[0] / 2;
+    size2 = currentWindow->Size[0] / 2;
+    // Splitter(true, 4.f, &size1, &size2, 20, 20);
+    ImGui::BeginChild("1", ImVec2(size1, height), true);
     DrawSceneIndexTreeView(selectedFilter, selectedInputName, selectedPrimIndexPath);
-    ImGui::SameLine(); // TODO separator between treeview and params
-    DrawPrimParameters(selectedFilter, selectedPrimIndexPath);
+    ImGui::EndChild();
+    ImGui::SameLine();
+    ImGui::BeginChild("2", ImVec2(size2, height), true);
+    DrawSceneIndexPrimParameters(selectedFilter, selectedPrimIndexPath);
+    ImGui::EndChild();
+
 }
 #endif
