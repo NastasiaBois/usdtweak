@@ -251,7 +251,7 @@ inline void RemoveArc(const SdfPrimSpecHandle &primSpec, const ArcT &arc) {
     std::function<void()> removeItem = [=]() {
         GetCompositionArcList(primSpec, arc).RemoveItemEdits(arc);
         // Also clear the arc list if there are no more items
-        if (GetCompositionArcList(primSpec, arc).HasKeys()) {
+        if (!GetCompositionArcList(primSpec, arc).HasKeys()) {
             ClearArcList(primSpec, arc);
         }
     };

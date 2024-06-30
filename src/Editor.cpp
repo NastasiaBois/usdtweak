@@ -37,6 +37,7 @@
 #include "UsdHelpers.h"
 #include "Stamp.h"
 #include "ManipulatorToolbox.h"
+#include "HydraBrowser.h"
 
 namespace clk = std::chrono;
 
@@ -57,6 +58,7 @@ namespace clk = std::chrono;
 #define SdfPrimPropertiesWindowTitle "Layer property editor"
 #define SdfLayerAsciiEditorWindowTitle "Layer text editor"
 #define SdfAttributeWindowTitle "Attribute editor"
+#define HydraBrowserWindowTitle "Hydra browser"
 #define TimelineWindowTitle "Timeline"
 #define Viewport1WindowTitle "Viewport1"
 #define Viewport2WindowTitle "Viewport2"
@@ -101,13 +103,13 @@ struct AboutModalDialog : public ModalDialog {
         ImGui::Text("https://github.com/cpichard/usdtweak/issues");
         ImGui::Text("or by mail: cpichard.github@gmail.com");
         ImGui::Text("");
-        ImGui::Text("usdtweak - Copyright (c) 2016-2023 Cyril Pichard - Apache License 2.0");
+        ImGui::Text("usdtweak - Copyright (c) 2016-2024 Cyril Pichard - Apache License 2.0");
         ImGui::Text("");
         ImGui::Text("USD " USD_VERSION " - https://github.com/PixarAnimationStudios/USD");
-        ImGui::Text("   Copyright (c) 2016-2023 Pixar - Modified Apache 2.0 License");
+        ImGui::Text("   Copyright (c) 2016-2024 Pixar - Modified Apache 2.0 License");
         ImGui::Text("");
         ImGui::Text("IMGUI - https://github.com/ocornut/imgui");
-        ImGui::Text("   Copyright (c) 2014-2023 Omar Cornut - The MIT License (MIT)");
+        ImGui::Text("   Copyright (c) 2014-2024 Omar Cornut - The MIT License (MIT)");
         ImGui::Text("");
         ImGui::Text("GLFW - https://www.glfw.org/");
         ImGui::Text("   Copyright © 2002-2006 Marcus Geelnard - The zlib/libpng License ");
@@ -801,6 +803,7 @@ void Editor::DrawMainMenuBar() {
             ImGui::MenuItem(SdfPrimPropertiesWindowTitle, nullptr, &_settings._showPrimSpecEditor);
             ImGui::MenuItem(SdfLayerAsciiEditorWindowTitle, nullptr, &_settings._textEditor);
             ImGui::MenuItem(SdfAttributeWindowTitle, nullptr, &_settings._showSdfAttributeEditor);
+            ImGui::MenuItem(HydraBrowserWindowTitle, nullptr, &_settings._showHydraBrowser);
             ImGui::MenuItem(TimelineWindowTitle, nullptr, &_settings._showTimeline);
             ImGui::MenuItem(Viewport1WindowTitle, nullptr, &_settings._showViewport1);
 #if ENABLE_MULTIPLE_VIEWPORTS
@@ -952,7 +955,7 @@ void Editor::Draw() {
     if (_settings._showLayerStackEditor) {
         TRACE_SCOPE(SdfLayerStackWindowTitle);
         const std::string title(SdfLayerStackWindowTitle "###Layer stack");
-        ImGui::Begin(title.c_str(), &_settings._showLayerStackEditor, layerWindowFlag);
+        ImGui::Begin(title.c_str(), &_settings._showLayerStackEditor);
         //DrawLayerSublayerStack(rootLayer);
         DrawStageLayerEditor(GetCurrentStage());
         ImGui::End();
@@ -1023,6 +1026,13 @@ void Editor::Draw() {
         ImGui::End();
     }
 
+    if (_settings._showHydraBrowser) {
+        TRACE_SCOPE(HydraBrowserWindowTitle);
+        ImGui::Begin(HydraBrowserWindowTitle, &_settings._showHydraBrowser);
+        DrawHydraBrowser();
+        ImGui::End();
+    }
+    
     DrawCurrentModal();
 
     ///////////////////////

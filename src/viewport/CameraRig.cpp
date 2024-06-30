@@ -58,6 +58,7 @@ CameraRig::CameraRig(const GfVec2i &viewportSize, bool isZUp)
     SetZIsUp(isZUp);
 }
 
+// TODO: function name is misleading, it doesn't reset the position, it resets the proj mat
 void CameraRig::ResetPosition(GfCamera &camera) {
     GfRotation rotf;
     if (camera.GetProjection() == GfCamera::Perspective) {
@@ -97,13 +98,13 @@ void CameraRig::FrameBoundingBox(GfCamera &camera, const GfBBox3d &bbox) {
         // Move the viewpoint to the center of the bounding box
         // TODO: We should make sure that the camera viewpoint ends up outside of all bounding boxes
         // Unfortunately we don't have this information here, we know only the selected bbox,
-        // so by default we put the camera far away from it (hence the -10000) and with clipping plane centered around 0.
+        // so by default we put the camera far away from it (hence the -1000) and with clipping plane centered around 0.
         // This is not great and that could cause visible issues on larges scenes. We should get the whole scene bounding box
         // so that we can correctly position and set clipping plane of internal cameras.
         // This could be done when the user call "Fit camera"
         const GfFrustum frustum = camera.GetFrustum();
         GfMatrix4d mat = camera.GetTransform();
-        mat.SetTranslateOnly(bbox.ComputeCentroid() - 10000.f*frustum.ComputeViewDirection());
+        mat.SetTranslateOnly(bbox.ComputeCentroid() - 1000.f*frustum.ComputeViewDirection());
         camera.SetTransform(mat);
         
         // Compute framing

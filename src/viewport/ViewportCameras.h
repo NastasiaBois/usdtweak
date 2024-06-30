@@ -58,10 +58,8 @@ public:
 
 private:
     inline bool IsPerspective() const { return _currentConfig->_renderCameraType == ViewportPerspective;}
-    inline bool IsTop() const { return _currentConfig->_renderCameraType == ViewportTop;}
-    inline bool IsBottom() const { return _currentConfig->_renderCameraType == ViewportBottom;}
-    
-    typedef enum CameraType {ViewportPerspective, ViewportTop, ViewportBottom, StageCamera} CameraType;
+   
+    typedef enum CameraType {ViewportPerspective, ViewportTop, ViewportBottom, ViewportRight, ViewportLeft, ViewportFront, ViewportBack, StageCamera} CameraType;
     
     // Set a new Stage camera path
     void UseStageCamera(const UsdStageRefPtr &stage, const SdfPath &cameraPath);
@@ -79,11 +77,8 @@ private:
     // Common to all stages, the perpective and ortho cams
     struct OwnedCameras {
         OwnedCameras ();
-        // Persp camera
-        GfCamera _perspectiveCamera;
-        // Ortho cameras
-        GfCamera _topCamera;
-        GfCamera _bottomCamera;
+        // 7 cameras, the index is CameraType (Persp, Top, Bottom, etc)
+        std::array<GfCamera, 7> _cameras;
     };
     
     // We could also copy instead of referencing the cam ...
@@ -102,5 +97,7 @@ private:
     std::unordered_map<std::string, CameraConfiguration> _perStageConfiguration;
     
     CameraConfiguration *_currentConfig = nullptr;
+    
+    static const std::array<std::string, 7> _cameraNames;
 
 };

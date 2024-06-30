@@ -7,9 +7,9 @@
 #include <pxr/usd/usdGeom/camera.h>
 #include <pxr/base/gf/rotation.h>
 
-static const std::string PerspectiveStr("Persp");
-static const std::string TopStr("Top");
-static const std::string BottomStr("Bottom");
+const std::array<std::string, 7> ViewportCameras:: ViewportCameras::_cameraNames = {
+    "Persp", "Top", "Bottom", "Right", "Left", "Front", "Back"
+};
 
 static void DrawViewportCameraEditor(GfCamera &camera, const UsdStageRefPtr &stage) {
     float focal = camera.GetFocalLength();
@@ -64,17 +64,38 @@ static void DrawUsdGeomCameraEditor(const UsdGeomCamera &usdGeomCamera, UsdTimeC
     }
 }
 
+inline
+void InitPerspCamera(GfCamera &cam) {
+    // We init the perps camera even though it will be reset by the viewport on the next frame by FrameRootPrim
+    GfMatrix4d mat;
+    cam.SetProjection(GfCamera::Perspective);
+    cam.SetClippingRange({1.f, 20000.f});
+    mat.SetLookAt({0, 0, 100.f}, {0.f, 0.f, 0.f}, {0.0, 1.0, 0.0});
+    // Same as CameraRig
+    cam.SetPerspectiveFromAspectRatioAndFieldOfView(16.0 / 9.0, 60, GfCamera::FOVHorizontal);
+    cam.SetFocusDistance(100.f);
+    cam.SetTransform(mat);
+}
+
+inline
+void InitOrthoCamera(GfCamera &cam, const GfVec3d &axis, double angle, const GfVec3d &translate) {
+    GfMatrix4d mat;
+    cam.SetProjection(GfCamera::Orthographic);
+    cam.SetClippingRange({0.1, 20000.f});
+    mat.SetTransform(GfRotation(axis, angle), translate);
+    cam.SetTransform(mat);
+}
+
 ViewportCameras::OwnedCameras::OwnedCameras () {
     GfMatrix4d mat;
-    _topCamera.SetProjection(GfCamera::Orthographic);
-    _topCamera.SetClippingRange({0.1, 20000.f});
-    mat.SetTransform(GfRotation({1.0, 0.0, 0.0}, -90.f), {0.0, 10000.f, 0.0});
-    _topCamera.SetTransform(mat);
-    
-    _bottomCamera.SetProjection(GfCamera::Orthographic);
-    _bottomCamera.SetClippingRange({0.1, 20000.f});
-    mat.SetTransform(GfRotation({1.0, 0.0, 0.0}, 90.f), {0.0, -10000.f, 0.0});
-    _bottomCamera.SetTransform(mat);
+    // TODO: change init depending on the stage orientation (up axis)
+    InitPerspCamera(_cameras[ViewportPerspective]);
+    InitOrthoCamera(_cameras[ViewportTop], {1.0, 0.0, 0.0}, -90.f, {0.0, 10000.f, 0.0});
+    InitOrthoCamera(_cameras[ViewportBottom], {1.0, 0.0, 0.0}, 90.f, {0.0, -10000.f, 0.0});
+    InitOrthoCamera(_cameras[ViewportLeft], {0.0, 1.0, 0.0}, -90.f, {10000.0, 0.0, 0.0});
+    InitOrthoCamera(_cameras[ViewportRight], {0.0, 1.0, 0.0}, 90.f, {-10000.f, 0.0, 0.0});
+    InitOrthoCamera(_cameras[ViewportFront], {0.0, 1.0, 0.0}, 0, {0.0, 0.0, -10000.f});
+    InitOrthoCamera(_cameras[ViewportBack], {0.0, 1.0, 0.0}, 180.f, {0.0, 0.0, 10000.f});
 }
 
 std::unordered_map<std::string, ViewportCameras::OwnedCameras> ViewportCameras::_viewportCamerasPerStage = {};
@@ -89,7 +110,7 @@ ViewportCameras::ViewportCameras() {
     _currentConfig = &_perStageConfiguration[""];
     _ownedCameras = &_viewportCamerasPerStage[""];
     // Default to perpective camera
-    _renderCamera = &_ownedCameras->_perspectiveCamera;
+    _renderCamera = &_ownedCameras->_cameras[ViewportPerspective];
 }
 
 void ViewportCameras::DrawCameraEditor(const UsdStageRefPtr &stage, UsdTimeCode tc) {
@@ -109,23 +130,11 @@ void ViewportCameras::UseStageCamera(const UsdStageRefPtr &stage, const SdfPath 
 }
 
 void ViewportCameras::UseInternalCamera(const UsdStageRefPtr &stage, CameraType cameraType) {
-
-    switch (cameraType) {
-        case ViewportPerspective:
-            _renderCamera = &_ownedCameras->_perspectiveCamera;
-            break;
-        case ViewportTop:
-            _renderCamera = &_ownedCameras->_topCamera;
-            break;
-        case ViewportBottom:
-            _renderCamera = &_ownedCameras->_bottomCamera;
-            break;
-        default:
-            assert("ViewportCameras: unknown camera type" && false);
-            return;
+    if (cameraType != StageCamera) {
+        _renderCamera = &_ownedCameras->_cameras[cameraType];
+        _currentConfig->_stageCameraPath = SdfPath::EmptyPath();
+        _currentConfig->_renderCameraType = cameraType;
     }
-    _currentConfig->_stageCameraPath = SdfPath::EmptyPath();
-    _currentConfig->_renderCameraType = cameraType;
 }
 
 // This 'Update' function should update the internal data of this class.
@@ -184,14 +193,10 @@ void ViewportCameras::SetCameraAspectRatio(int width, int height) {
 }
 
 std::string ViewportCameras::GetCurrentCameraName() const {
-    if (IsPerspective()) {
-        return PerspectiveStr;
-    } else if (IsTop()) {
-        return TopStr;
-    } else if (IsBottom()) {
-        return BottomStr;
-    } else {
+    if (IsUsingStageCamera()){
         return _currentConfig->_stageCameraPath.GetName();
+    } else {
+        return _cameraNames[_currentConfig->_renderCameraType];
     }
 }
 
@@ -199,30 +204,28 @@ std::string ViewportCameras::GetCurrentCameraName() const {
 void ViewportCameras::DrawCameraList(const UsdStageRefPtr &stage) {
     ScopedStyleColor defaultStyle(DefaultColorStyle);
 #if ENABLE_MULTIPLE_VIEWPORTS
-    if (ImGui::Button("Persp")) {
-        UseInternalCamera(stage, ViewportPerspective);
-    }
-    ImGui::SameLine();
-    ImGui::Button("Front");
-    ImGui::SameLine();
-    ImGui::Button("Back");
-    ImGui::SameLine();
-    ImGui::Button("Left");
-    ImGui::SameLine();
-    ImGui::Button("Right");
-    ImGui::SameLine();
-    if (ImGui::Button("Top")) {
-        UseInternalCamera(stage, ViewportTop);
-    }
-    ImGui::SameLine();
-    if (ImGui::Button("Bottom")) {
-        UseInternalCamera(stage, ViewportBottom);
-    }
+    
+#define CAMERA_BUTTON(NAME) \
+    ImGui::SameLine();\
+    if (ImGui::Button(_cameraNames[Viewport ## NAME].c_str())) {\
+        UseInternalCamera(stage, Viewport ## NAME);\
+    }\
+
+    CAMERA_BUTTON(Perspective)
+    CAMERA_BUTTON(Front)
+    CAMERA_BUTTON(Back)
+    CAMERA_BUTTON(Left)
+    CAMERA_BUTTON(Right)
+    CAMERA_BUTTON(Top)
+    CAMERA_BUTTON(Bottom)
+
+#undef MAKE_CAMERA_BUTTON
+
 #endif
 
     if (ImGui::BeginListBox("##CameraList")) {
 #if !ENABLE_MULTIPLE_VIEWPORTS
-        if (ImGui::Selectable(PerspectiveStr.c_str(), IsPerspective())) {
+        if (ImGui::Selectable(_cameraNames[ViewportPerspective].c_str(), IsPerspective())) {
             UseInternalCamera(stage, ViewportPerspective);
         }
 #endif

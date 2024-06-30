@@ -316,7 +316,7 @@ void DrawSdfLayerMetadata(const SdfLayerRefPtr &layer) {
             DrawThreeColumnsRow<LayerFieldRenderSettingsPrimPath>(rowId++, layer);
             DrawThreeColumnsRow<LayerFieldDocumentation>(rowId++, layer);
             DrawThreeColumnsRow<LayerFieldComment>(rowId++, layer);
-            DrawThreeColumnsDictionaryEditor<SdfPrimSpec>(rowId, layer->GetPseudoRoot(), SdfFieldKeys->CustomData);
+            DrawThreeColumnsDictionaryEditor<SdfPrimSpec>(rowId, layer->GetPseudoRoot(), SdfFieldKeys->CustomLayerData);
             DrawThreeColumnsDictionaryEditor<SdfPrimSpec>(rowId, layer->GetPseudoRoot(), SdfFieldKeys->AssetInfo);
             EndThreeColumnsTable();
         }

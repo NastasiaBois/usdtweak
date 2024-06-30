@@ -29,6 +29,7 @@ struct EditorSettings {
     bool _textEditor = false;
     bool _showSdfAttributeEditor = false;
     bool _showUsdConnectionEditor = false;
+    bool _showHydraBrowser = false;
     int _mainWindowWidth;
     int _mainWindowHeight;
 
