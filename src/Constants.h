@@ -81,3 +81,4 @@ constexpr int ERROR_UNABLE_TO_COMPILE_SHADER = 110;
 
 // Experimental work in progress features
 #define ENABLE_MULTIPLE_VIEWPORTS 0
+#define ENABLE_CONNECTION_EDITOR 0

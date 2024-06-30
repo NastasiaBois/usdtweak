@@ -797,7 +797,9 @@ void Editor::DrawMainMenuBar() {
             ImGui::MenuItem(ContentBrowserWindowTitle, nullptr, &_settings._showContentBrowser);
             ImGui::MenuItem(UsdStageHierarchyWindowTitle, nullptr, &_settings._showOutliner);
             ImGui::MenuItem(UsdPrimPropertiesWindowTitle, nullptr, &_settings._showPropertyEditor);
+#if ENABLE_CONNECTION_EDITOR
             ImGui::MenuItem(UsdConnectionEditorWindowTitle, nullptr, &_settings._showUsdConnectionEditor);
+#endif
             ImGui::MenuItem(SdfLayerHierarchyWindowTitle, nullptr, &_settings._showLayerHierarchyEditor);
             ImGui::MenuItem(SdfLayerStackWindowTitle, nullptr, &_settings._showLayerStackEditor);
             ImGui::MenuItem(SdfPrimPropertiesWindowTitle, nullptr, &_settings._showPrimSpecEditor);
@@ -999,7 +1001,7 @@ void Editor::Draw() {
         ImGui::End();
     }
 
-#if 1 // experimental - connection editor is disabled
+#if ENABLE_CONNECTION_EDITOR // experimental - connection editor is disabled
     if (_settings._showUsdConnectionEditor) {
         ImGui::Begin(UsdConnectionEditorWindowTitle);
         TRACE_SCOPE(UsdConnectionEditorWindowTitle);
