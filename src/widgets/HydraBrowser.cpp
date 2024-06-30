@@ -90,11 +90,8 @@ static void DrawSceneIndexTreeView(HdSceneIndexBasePtr inputIndex, const std::st
     if (inputIndex) {
         // Get all the opened paths in a vector
         ImGuiWindow *currentWindow = ImGui::GetCurrentWindow();
-        ImVec2 tableOuterSize(currentWindow->Size[0], currentWindow->Size[1] - 100); // TODO: set the correct size
-        constexpr ImGuiTableFlags tableFlags =
-            ImGuiTableFlags_SizingFixedFit | /*ImGuiTableFlags_RowBg |*/ ImGuiTableFlags_ScrollY;
-
-        if (ImGui::BeginTable("##DrawSceneIndexHierarchy", 2, tableFlags, tableOuterSize)) {
+        constexpr ImGuiTableFlags tableFlags = ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollY;
+        if (ImGui::BeginTable("##DrawSceneIndexHierarchy", 2, tableFlags)) {
             ImGui::TableSetupColumn("Hierarchy");
             ImGui::TableSetupColumn("Type");
 
@@ -183,6 +180,7 @@ static void DrawDataSourceRecursively(const std::string &dataSourceName, HdDataS
                 ImGui::Selectable(dataSourceName.c_str());
                 ImGui::TableSetColumnIndex(1);
                 // TODO readonly DrawVtValue as we don't want the user thinking he can change the values here
+                ImGui::SetNextItemWidth(-FLT_MIN);
                 DrawVtValue("##" + dataSourceName, sampled->GetValue(0));
             } else {
                 HdVectorDataSourceHandle vectorSource = HdVectorDataSource::Cast(dataSource);
@@ -213,13 +211,10 @@ static void DrawSceneIndexPrimParameters(HdSceneIndexBasePtr inputIndex, const S
         // we need to Cast it to all the potential hydra class known and, worse case, it could happen
         // for each frame and for all the parameters of the scene. So we just consider the selected parameter
         ImGuiWindow *currentWindow = ImGui::GetCurrentWindow();
-        ImVec2 tableOuterSize(currentWindow->Size[0], currentWindow->Size[1] - 100); // TODO: set the correct size
-        constexpr ImGuiTableFlags tableFlags =
-            ImGuiTableFlags_SizingFixedFit | /*ImGuiTableFlags_RowBg |*/ ImGuiTableFlags_ScrollY;
-        
-        if (ImGui::BeginTable("##DrawHydraParameter", 2, tableFlags, tableOuterSize)) {
-            ImGui::TableSetupColumn("Name");
-            ImGui::TableSetupColumn("Value");
+        constexpr ImGuiTableFlags tableFlags = ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY;
+        if (ImGui::BeginTable("##DrawHydraParameter", 2, tableFlags)) {
+            ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_WidthFixed);
+            ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch);
             ImGui::TableHeadersRow();
             HdSceneIndexPrim siPrim = inputIndex->GetPrim(selectedPrimIndexPath);
             if (siPrim.dataSource) {
@@ -237,14 +232,13 @@ void DrawHydraBrowser() {
     static HdSceneIndexBasePtr selectedFilter;
     DrawSceneIndexSelector(selectedSceneIndexName, selectedInputName);
     DrawSceneIndexFilterSelector(selectedSceneIndexName, selectedFilter);
-    
-    
+
     // TODO Splitter layout
     // TODO use ImGuiChildFlags_Border| ImGuiChildFlags_ResizeX with more recent version of imgui
     ImGuiWindow *currentWindow = ImGui::GetCurrentWindow();
     int height = currentWindow->Size[1] - 100;
-    static float size1= 0.f;
-    static float size2= 0.f;
+    static float size1 = 0.f;
+    static float size2 = 0.f;
     size1 = currentWindow->Size[0] / 2;
     size2 = currentWindow->Size[0] / 2;
     // Splitter(true, 4.f, &size1, &size2, 20, 20);
@@ -255,6 +249,5 @@ void DrawHydraBrowser() {
     ImGui::BeginChild("2", ImVec2(size2, height), true);
     DrawSceneIndexPrimParameters(selectedFilter, selectedPrimIndexPath);
     ImGui::EndChild();
-
 }
 #endif
