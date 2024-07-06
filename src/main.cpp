@@ -25,6 +25,18 @@
 
 // clang-format on
 
+// Select high performance GPU on multi GPU platforms, (laptops, vm, etc.)
+extern "C"
+{
+    // NVidia GPUs
+    // see: https://stackoverflow.com/questions/10535950/forcing-nvidia-gpu-programmatically-in-optimus-laptops/14041061#14041061
+    ARCH_EXPORT unsigned long NvOptimusEnablement = 0x00000001;
+
+    // AMD GPUs
+    // see: https://stackoverflow.com/questions/17458803/amd-equivalent-to-nvoptimusenablement
+    ARCH_EXPORT int AmdPowerXpressRequestHighPerformance = 1;
+}
+
 PXR_NAMESPACE_USING_DIRECTIVE
 
 // https://learn.microsoft.com/en-us/windows/win32/procthread/changing-environment-variables

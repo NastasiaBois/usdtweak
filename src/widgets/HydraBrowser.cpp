@@ -82,7 +82,6 @@ static void DrawSceneIndexFilterSelector(std::string &selectedSceneIndexName, Hd
         selectedSceneIndexName = "";
         inputIndex.Reset();
     }
-    return inputIndex;
 }
 
 static void DrawSceneIndexTreeView(HdSceneIndexBasePtr inputIndex, const std::string &selectedInputName,
