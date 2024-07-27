@@ -100,6 +100,22 @@ int main(int argc, char *const *argv) {
     if (!glfwInit())
         return -1;
 
+    // Setup OpenGL
+#if PXR_VERSION >= 2211
+#ifdef __APPLE__
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+    // Forward compat is required on macos with core profile
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+#else
+    // Storm needs openGL 4.5 on windows and linux
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
+    // Without the compat profile, storm will error.
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_COMPAT_PROFILE);
+#endif
+#else // PXR_VERSION < 22.11
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
@@ -108,6 +124,7 @@ int main(int argc, char *const *argv) {
 #else
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_COMPAT_PROFILE);
 #endif
+#endif // PXR_VERSION
 
     /* Create a windowed mode window and its OpenGL context */
     int width = loader.GetApplicationWidth();
