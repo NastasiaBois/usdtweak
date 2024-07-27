@@ -1003,7 +1003,7 @@ void Editor::Draw() {
 
 #if ENABLE_CONNECTION_EDITOR // experimental - connection editor is disabled
     if (_settings._showUsdConnectionEditor) {
-        ImGui::Begin(UsdConnectionEditorWindowTitle);
+        ImGui::Begin(UsdConnectionEditorWindowTitle, &_settings._showUsdConnectionEditor);
         TRACE_SCOPE(UsdConnectionEditorWindowTitle);
         if (GetCurrentStage()) {
             DrawConnectionEditor(GetCurrentStage());
