@@ -91,6 +91,10 @@ class Viewport final {
     /// Draw toolbar: camera selection, renderer options, viewport options ...
     void DrawToolBar(const ImVec2 widgetPosition);
 
+    /// Draw a menu bar on top of the viewport
+    void DrawMenuBar();
+    bool HasMenuBar() const {return _imagingSettings.showViewportMenu;};
+    
     // Position of the mouse in the viewport in normalized unit
     // This is computed in HandleEvents
 
