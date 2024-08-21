@@ -45,7 +45,13 @@ foreach (xxx MAJOR MINOR PATCH)
         REGEX "#define PXR_${xxx}_VERSION .*$")
     string(REGEX MATCHALL "[0-9]+" PXR_${xxx}_VERSION ${value})
 endforeach ()
-set(PXR_VERSION ${PXR_MAJOR_VERSION}.${PXR_MINOR_VERSION}.${PXR_PATCH_VERSION})
+file(STRINGS
+    ${pxr_h}
+    value
+    REGEX "#define PXR_VERSION .*$")
+string(REGEX MATCHALL "[0-9]+" PXR_VERSION ${value})
+# It was previously:
+#set(PXR_VERSION ${PXR_MAJOR_VERSION}.${PXR_MINOR_VERSION}.${PXR_PATCH_VERSION})
 
 # We add the compilation definitions and compiler options
 add_compile_options(${_houdini_compile_options})

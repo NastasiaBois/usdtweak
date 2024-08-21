@@ -51,7 +51,7 @@ void Blueprints::SetBlueprintsLocations(const std::vector<std::string> &location
         for (const auto &entry : fs::directory_iterator(path)) {
             if (fs::is_directory(entry)) {
                 paths.push(entry.path().generic_string());
-                std::string folderStem = std::prev(entry.path().end())->generic_string();
+                std::string folderStem = entry.path().stem().generic_string();
                 if (!folderStem.empty()) {
                     folderStem[0] = std::toupper(folderStem[0]);
                     std::string subFolderName = folder + "/" + folderStem;
