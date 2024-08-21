@@ -842,34 +842,38 @@ void Editor::Draw() {
 
     if (_settings._showViewport1) {
         //
+        const ImGuiWindowFlags viewportFlags = GetViewport().HasMenuBar() ? ImGuiWindowFlags_None | ImGuiWindowFlags_MenuBar : ImGuiWindowFlags_None;
         TRACE_SCOPE(Viewport1WindowTitle);
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
-        ImGui::Begin(Viewport1WindowTitle, &_settings._showViewport1);
+        ImGui::Begin(Viewport1WindowTitle, &_settings._showViewport1, viewportFlags);
         ImGui::PopStyleVar();
         GetViewport().Draw();
         ImGui::End();
     }
 #if ENABLE_MULTIPLE_VIEWPORTS
     if (_settings._showViewport2) {
+        const ImGuiWindowFlags viewportFlags = _viewport2.HasMenuBar() ? ImGuiWindowFlags_None | ImGuiWindowFlags_MenuBar : ImGuiWindowFlags_None;
         TRACE_SCOPE(Viewport2WindowTitle);
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
-        ImGui::Begin(Viewport2WindowTitle, &_settings._showViewport2);
+        ImGui::Begin(Viewport2WindowTitle, &_settings._showViewport2, viewportFlags);
         ImGui::PopStyleVar();
         _viewport2.Draw();
         ImGui::End();
     }
     if (_settings._showViewport3) {
+        const ImGuiWindowFlags viewportFlags = _viewport3.HasMenuBar() ? ImGuiWindowFlags_None | ImGuiWindowFlags_MenuBar : ImGuiWindowFlags_None;
         TRACE_SCOPE(Viewport3WindowTitle);
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
-        ImGui::Begin(Viewport3WindowTitle, &_settings._showViewport3);
+        ImGui::Begin(Viewport3WindowTitle, &_settings._showViewport3, viewportFlags);
         ImGui::PopStyleVar();
         _viewport3.Draw();
         ImGui::End();
     }
     if (_settings._showViewport4) {
+        const ImGuiWindowFlags viewportFlags = _viewport4.HasMenuBar() ? ImGuiWindowFlags_None | ImGuiWindowFlags_MenuBar : ImGuiWindowFlags_None;
         TRACE_SCOPE(Viewport4WindowTitle);
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
-        ImGui::Begin(Viewport4WindowTitle, &_settings._showViewport4);
+        ImGui::Begin(Viewport4WindowTitle, &_settings._showViewport4, viewportFlags);
         ImGui::PopStyleVar();
         _viewport4.Draw();
         ImGui::End();

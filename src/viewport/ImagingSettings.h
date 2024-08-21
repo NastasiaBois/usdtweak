@@ -21,6 +21,9 @@ struct ImagingSettings : UsdImagingGLRenderParams {
     
     // Viewport
     bool showGrid;
+    bool showGizmos;
+    bool showUI;
+    bool showViewportMenu;
 
 private:
     GlfSimpleLightVector _lights;

@@ -139,6 +139,10 @@ A cmake command will then look like:
 
     cmake  -G "Visual Studio 16 2019" -A x64 -Dpxr_DIR=C:\path\to\usd-21.11 -Dglfw3_DIR=C:\path\to\glfw3-3.3.6\lib\cmake\glfw3 ..
 
+## Contributing
+
+All contributions are really welcome. To contribute you can make a Pull Request from your fork. This [video](https://www.youtube.com/watch?v=nT8KGYVurIU) explains the process of forking and creating pull requests.
+
 ## Known issues
 
 - When enabling the scene materials in Storm, the texture don't always load correctly. This can be solved by setting the USDIMAGINGGL_ENGINE_ENABLE_SCENE_INDEX environment variable to 1.

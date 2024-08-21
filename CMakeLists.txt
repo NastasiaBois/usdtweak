@@ -13,17 +13,18 @@ endif()
 # for glfw, if the user doesn't specify the glfw install dir, we attempt to
 # download the latest version and add it to the project directly
 if (DEFINED glfw3_DIR)
-    find_package(glfw3 3.3 REQUIRED)
+    find_package(glfw3 3.4 REQUIRED)
 else ()
     include(FetchContent)
     FetchContent_Declare(
         glfw
-        URL https://github.com/glfw/glfw/releases/download/3.3.8/glfw-3.3.8.zip
+        URL https://github.com/glfw/glfw/releases/download/3.4/glfw-3.4.zip
     )
     set(GLFW_BUILD_EXAMPLES OFF)
     set(GLFW_BUILD_TESTS OFF)
     set(GLFW_BUILD_DOCS OFF)
     set(GLFW_INSTALL OFF)
+    set(GLFW_USE_HYBRID_HPG ON)
     FetchContent_MakeAvailable(glfw)
 endif (DEFINED glfw3_DIR)
 

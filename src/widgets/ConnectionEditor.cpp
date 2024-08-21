@@ -373,7 +373,7 @@ struct ConnectionsEditorCanvas { // rename to InfiniteCanvas ??
         const ImU32 gridColor = IM_COL32(200, 200, 200, 40);
         // Find the first visible line of the grid
         auto gridOrigin = ScreenToCanvas(widgetOrigin);
-        gridOrigin = ImVec2(std::ceilf(gridOrigin.x/gridSpacing)*gridSpacing, std::ceilf(gridOrigin.y/gridSpacing)*gridSpacing);
+        gridOrigin = ImVec2(ceilf(gridOrigin.x/gridSpacing)*gridSpacing, ceilf(gridOrigin.y/gridSpacing)*gridSpacing);
         gridOrigin = CanvasToScreen(gridOrigin);
         auto gridSize0 = CanvasToScreen(ImVec2(0.f, 0.f));
         auto gridSize1 = CanvasToScreen(ImVec2(gridSpacing, gridSpacing));

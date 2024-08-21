@@ -21,6 +21,40 @@ namespace clk = std::chrono;
 
 // TODO: picking meshes: https://groups.google.com/g/usd-interest/c/P2CynIu7MYY/m/UNPIKzmMBwAJ
 
+void Viewport::DrawMenuBar() {
+    if (ImGui::BeginMenuBar()) {
+        if (ImGui::BeginMenu("Renderer")) {
+            if (_renderer) {
+                DrawRendererControls(*_renderer);
+                DrawRendererSelectionCombo(*_renderer);
+                DrawColorCorrection(*_renderer, _imagingSettings);
+                DrawAovSettings(*_renderer);
+                DrawRendererCommands(*_renderer);
+                if (ImGui::BeginMenu("Renderer Settings")) {
+                    DrawRendererSettings(*_renderer, _imagingSettings);
+                    ImGui::EndMenu();
+                }
+            }
+            ImGui::EndMenu();
+        }
+        if (ImGui::BeginMenu("Viewport")) {
+            if (_renderer) {
+                DrawImagingSettings(*_renderer, _imagingSettings);
+                ImGui::Checkbox("Show UI", &_imagingSettings.showUI);
+            }
+            ImGui::EndMenu();
+        }
+        if (ImGui::BeginMenu("Cameras")) {
+            if (_renderer) {
+                _cameras.DrawCameraList(GetCurrentStage());
+                _cameras.DrawCameraEditor(GetCurrentStage(), GetCurrentTimeCode());
+            }
+            ImGui::EndMenu();
+        }
+        ImGui::EndMenuBar();
+    }
+}
+
 Viewport::Viewport(UsdStageRefPtr stage, Selection &selection)
     : _stage(stage), _cameraManipulator({InitialWindowWidth, InitialWindowHeight}),
       _currentEditingState(new MouseHoverManipulator()), _activeManipulator(&_positionManipulator), _selection(selection),
@@ -71,6 +105,9 @@ static void DrawOpenedStages() {
 
 /// Draw the viewport widget
 void Viewport::Draw() {
+    if (_imagingSettings.showViewportMenu) {
+        DrawMenuBar();
+    }
     const ImVec2 wsize = ImGui::GetWindowSize();
     // Set the size of the texture here as we need the current window size
     const auto cursorPos = ImGui::GetCursorPos();
@@ -89,9 +126,11 @@ void Viewport::Draw() {
         //}
         HandleManipulationEvents();
         HandleKeyboardShortcut();
-        ImGui::BeginDisabled(!bool(GetCurrentStage()));
-        DrawToolBar(cursorPos + ImVec2(15, 15));
-        ImGui::EndDisabled();
+        if (_imagingSettings.showUI) {
+            ImGui::BeginDisabled(!bool(GetCurrentStage()));
+            DrawToolBar(cursorPos + ImVec2(15, 15));
+            ImGui::EndDisabled();
+        }
     }
 }
 
@@ -126,6 +165,7 @@ void Viewport::DrawToolBar(const ImVec2 widgetPosition) {
     ImGui::Button(ICON_FA_TV);
     if (_renderer && ImGui::BeginPopupContextItem(nullptr, flags)) {
         DrawImagingSettings(*_renderer, _imagingSettings);
+        ImGui::Checkbox("Show menu bar", &_imagingSettings.showViewportMenu);
         ImGui::EndPopup();
     }
     if (ImGui::IsItemHovered() && GImGui->HoveredIdTimer > 1) {
@@ -401,10 +441,12 @@ void Viewport::Render() {
         return;
 
     // Draw active manipulator and HUD
-    BeginHydraUI(width, height);
-    GetActiveManipulator().OnDrawFrame(*this);
-    // DrawHUD(this);
-    EndHydraUI();
+    if (_imagingSettings.showGizmos) {
+        BeginHydraUI(width, height);
+        GetActiveManipulator().OnDrawFrame(*this);
+        // DrawHUD(this);
+        EndHydraUI();
+    }
 
     _drawTarget->Bind();
     glEnable(GL_DEPTH_TEST);
@@ -456,10 +498,10 @@ void Viewport::Render() {
     if (_imagingSettings.showGrid) {
         _grid.Render(*this);
     }
-
-    ImGui::Render();
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
+    if (_imagingSettings.showGizmos) {
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+    }
     _drawTarget->Unbind();
 }
 
@@ -537,4 +579,3 @@ bool Viewport::TestIntersection(GfVec2d clickedPoint, SdfPath &outHitPrimPath, S
             GetCurrentStage()->GetPseudoRoot(), _imagingSettings, &outHitPoint, &outHitNormal,
             &outHitPrimPath, &outHitInstancerPath, &outHitInstanceIndex));
 }
-

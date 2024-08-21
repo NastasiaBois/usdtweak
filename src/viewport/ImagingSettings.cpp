@@ -39,6 +39,9 @@ ImagingSettings::ImagingSettings() {
     enableCameraLight = true;
 
     showGrid = true;
+    showGizmos = true;
+    showUI = true;
+    showViewportMenu = false;
 
     // TODO: set color correction as well
 
@@ -140,6 +143,7 @@ void DrawImagingSettings(UsdImagingGLEngine &renderer, ImagingSettings &renderpa
     ImGui::Checkbox("Enable USD draw modes", &renderparams.enableUsdDrawModes);
     ImGui::Checkbox("Enable camera light", &renderparams.enableCameraLight);
     ImGui::Checkbox("Show grid", &renderparams.showGrid);
+    ImGui::Checkbox("Show gizmos", &renderparams.showGizmos);
 }
 
 void DrawRendererSelectionCombo(UsdImagingGLEngine &renderer) {
