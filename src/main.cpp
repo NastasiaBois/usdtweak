@@ -55,6 +55,10 @@ static bool InstallApplicationPluginPaths(const std::vector<std::string> &plugin
     return false;
 }
 
+static void glfw_error_callback(int error, const char* description) {
+    std::cerr << "Error: " << description << std::endl;
+}
+
 int main(int argc, char *const *argv) {
 
     CommandLineOptions options(argc, argv);
@@ -85,9 +89,14 @@ int main(int argc, char *const *argv) {
     Py_Initialize();
 #endif
 
+    // Setup a glfw error callback before we try to initialize
+    glfwSetErrorCallback(glfw_error_callback);
+
     // Initialize glfw
-    if (!glfwInit())
+    if (!glfwInit()) {
+        std::cout << "Failure to initialize glfw" << std::endl;
         return -1;
+    }
 
     // Setup OpenGL
 #if PXR_VERSION >= 2211
