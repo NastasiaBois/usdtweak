@@ -226,9 +226,15 @@ static void DrawSceneIndexPrimParameters(HdSceneIndexBasePtr inputIndex, const S
 
 void DrawHydraBrowser() {
     static std::string selectedSceneIndexName;
-    static std::string selectedInputName;
-    static SdfPath selectedPrimIndexPath;
-    static HdSceneIndexBasePtr selectedFilter;
+    // TODO vector instead of map should be sufficient
+    static std::unordered_map<std::string, std::string> selectedInputNamePerSI; // per scene index
+    static std::unordered_map<std::string, SdfPath> selectedPrimIndexPathPerSI;
+    static std::unordered_map<std::string, HdSceneIndexBasePtr> selectedFilterPerSI;
+    
+    std::string &selectedInputName = selectedInputNamePerSI[selectedSceneIndexName];
+    HdSceneIndexBasePtr &selectedFilter = selectedFilterPerSI[selectedSceneIndexName];
+    SdfPath &selectedPrimIndexPath = selectedPrimIndexPathPerSI[selectedSceneIndexName];
+    
     DrawSceneIndexSelector(selectedSceneIndexName, selectedInputName);
     DrawSceneIndexFilterSelector(selectedSceneIndexName, selectedFilter);
 
