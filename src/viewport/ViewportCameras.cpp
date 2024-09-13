@@ -122,6 +122,19 @@ void ViewportCameras::DrawCameraEditor(const UsdStageRefPtr &stage, UsdTimeCode 
     }
 }
 
+void ViewportCameras::FindAndUseStageCamera(const UsdStageRefPtr &stage) {
+    if (stage) {
+        // TODO we might also want to find a RenderSettings node and use the camera if set
+        UsdPrimRange range = stage->Traverse();
+        for (const auto &prim: range) {
+            if (prim.IsA<UsdGeomCamera>()) {
+                UseStageCamera(stage, prim.GetPath());
+                break;
+            }
+        }
+    }
+}
+
 // This could be UseStageCamera
 void ViewportCameras::UseStageCamera(const UsdStageRefPtr &stage, const SdfPath &cameraPath) {
     _currentConfig->_renderCameraType = StageCamera;

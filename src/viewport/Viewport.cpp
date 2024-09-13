@@ -526,10 +526,10 @@ void Viewport::SetCurrentTimeCode(const UsdTimeCode &tc) {
 /// Update anything that could have change after a frame render
 void Viewport::Update() {
     if (GetCurrentStage()) {
-        bool newStage = false;
+        bool firstTimeStageLoaded = false;
         auto whichRenderer = _renderers.find(GetCurrentStage()); /// We expect a very limited number of opened stages
         if (whichRenderer == _renderers.end()) {
-            newStage = true;
+            firstTimeStageLoaded = true;
             SdfPathVector excludedPaths;
             _renderer = new UsdImagingGLEngine(GetCurrentStage()->GetPseudoRoot().GetPath(), excludedPaths);
             _renderers[GetCurrentStage()] = _renderer;
@@ -548,7 +548,10 @@ void Viewport::Update() {
         // Update cameras state, this will assign the user selected camera for the current stage at
         // a particular time
         _cameras.Update(GetCurrentStage(), GetCurrentTimeCode());
-        if (newStage) { //TODO C++20 [[unlikely]]
+        if (firstTimeStageLoaded) { //TODO C++20 [[unlikely]]
+            // Find a camera in the stage and use it. We might want to make it optional as it slows
+            // the first render
+            _cameras.FindAndUseStageCamera(GetCurrentStage());
             // TODO: framing should probably move in the update as we want to also frame when an
             // internal ortho camera is selected
             FrameRootPrim();
@@ -560,7 +563,6 @@ void Viewport::Update() {
         _drawTarget->Bind();
         _drawTarget->SetSize(_textureSize);
         _drawTarget->Unbind();
-
     }
 
     if (_renderer && _selection.UpdateSelectionHash(GetCurrentStage(), _lastSelectionHash)) {
