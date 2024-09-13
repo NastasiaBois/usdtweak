@@ -114,6 +114,10 @@ class Viewport final {
 
 
   private:
+    
+    /// Returns the current camera updated to match the viewport ratio
+    GfCamera GetViewportCamera(double width, double height) const;
+    
     // Viewport ID
     std::string _viewportName;
     

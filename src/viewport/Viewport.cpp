@@ -405,6 +405,19 @@ void Viewport::HandleManipulationEvents() {
 GfCamera &Viewport::GetEditableCamera() { return _cameras.GetEditableCamera(); }
 const GfCamera &Viewport::GetCurrentCamera() const { return _cameras.GetCurrentCamera(); }
 
+GfCamera Viewport::GetViewportCamera(double width, double height) const {
+    GfCamera viewportCamera = GetCurrentCamera();
+    if (viewportCamera.GetProjection() == GfCamera::Perspective) {
+        viewportCamera.SetPerspectiveFromAspectRatioAndFieldOfView(width / height,
+                                                                   viewportCamera.GetFieldOfView(GfCamera::FOVVertical),
+                                                                         GfCamera::FOVVertical);
+     } else { // assuming ortho
+         viewportCamera.SetOrthographicFromAspectRatioAndSize(width / height,
+                                                              viewportCamera.GetVerticalAperture() * GfCamera::APERTURE_UNIT,
+                                                                   GfCamera::FOVVertical);
+     }
+    return viewportCamera;
+}
 
 void Viewport::BeginHydraUI(int width, int height) {
     // Create a ImGui windows to render the gizmos in
@@ -485,8 +498,9 @@ void Viewport::Render() {
         if (_cameras.IsUsingStageCamera()) {
             _renderer->SetCameraPath(_cameras.GetStageCameraPath());
         } else {
-            _renderer->SetCameraState(GetCurrentCamera().GetFrustum().ComputeViewMatrix(),
-                                  GetCurrentCamera().GetFrustum().ComputeProjectionMatrix());
+            GfCamera viewportCamera = GetViewportCamera(width, height);
+            _renderer->SetCameraState(viewportCamera.GetFrustum().ComputeViewMatrix(),
+                                      viewportCamera.GetFrustum().ComputeProjectionMatrix());
         }
         _renderer->Render(GetCurrentStage()->GetPseudoRoot(), _imagingSettings);
     } else {
@@ -549,10 +563,6 @@ void Viewport::Update() {
 
     }
 
-    // We have to set the camera aspect ratio at each frame as the stage camera might have a different one
-    // and the user can resize the viewport
-    _cameras.SetCameraAspectRatio(_textureSize[0], _textureSize[1]);
-
     if (_renderer && _selection.UpdateSelectionHash(GetCurrentStage(), _lastSelectionHash)) {
         _renderer->ClearSelected();
         _renderer->SetSelected(_selection.GetSelectedPaths(GetCurrentStage()));
@@ -571,10 +581,11 @@ bool Viewport::TestIntersection(GfVec2d clickedPoint, SdfPath &outHitPrimPath, S
     double width = static_cast<double>(renderSize[0]);
     double height = static_cast<double>(renderSize[1]);
 
-    GfFrustum pixelFrustum = GetCurrentCamera().GetFrustum().ComputeNarrowedFrustum(clickedPoint, GfVec2d(1.0 / width, 1.0 / height));
+    GfCamera viewportCamera = GetViewportCamera(width, height);
+    GfFrustum pixelFrustum = viewportCamera.GetFrustum().ComputeNarrowedFrustum(clickedPoint, GfVec2d(1.0 / width, 1.0 / height));
     GfVec3d outHitPoint;
     GfVec3d outHitNormal;
-    return (_renderer && GetCurrentStage() && _renderer->TestIntersection(GetCurrentCamera().GetFrustum().ComputeViewMatrix(),
+    return (_renderer && GetCurrentStage() && _renderer->TestIntersection(viewportCamera.GetFrustum().ComputeViewMatrix(),
             pixelFrustum.ComputeProjectionMatrix(),
             GetCurrentStage()->GetPseudoRoot(), _imagingSettings, &outHitPoint, &outHitNormal,
             &outHitPrimPath, &outHitInstancerPath, &outHitInstanceIndex));

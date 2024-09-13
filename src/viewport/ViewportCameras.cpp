@@ -179,19 +179,6 @@ const SdfPath & ViewportCameras::GetStageCameraPath() const {
     return SdfPath::EmptyPath();
 }
 
-
-void ViewportCameras::SetCameraAspectRatio(int width, int height) {
-    if (GetCurrentCamera().GetProjection() == GfCamera::Perspective) {
-        GetEditableCamera().SetPerspectiveFromAspectRatioAndFieldOfView(double(width) / double(height),
-                                                                        _renderCamera->GetFieldOfView(GfCamera::FOVVertical),
-                                                                        GfCamera::FOVVertical);
-    } else { // assuming ortho
-        GetEditableCamera().SetOrthographicFromAspectRatioAndSize(double(width) / double(height),
-                                                                  _renderCamera->GetVerticalAperture() * GfCamera::APERTURE_UNIT,
-                                                                  GfCamera::FOVVertical);
-    }
-}
-
 std::string ViewportCameras::GetCurrentCameraName() const {
     if (IsUsingStageCamera()){
         return _currentConfig->_stageCameraPath.GetName();

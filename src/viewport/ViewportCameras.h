@@ -21,10 +21,7 @@ public:
     // This updates the internals of this structure following the changes that
     // happened between the previous frame and now
     void Update(const UsdStageRefPtr &stage, UsdTimeCode tc);
-    
-    // Change the camera aspect ratio
-    void SetCameraAspectRatio(int width, int height);
-    
+     
     //
     // UI helpers
     //
