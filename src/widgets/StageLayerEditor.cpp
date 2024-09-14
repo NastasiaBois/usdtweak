@@ -54,8 +54,9 @@ static void DrawLayerSublayerTreeNodeButtons(const SdfLayerRefPtr &layer, const 
     ScopedStyleColor transparentButtons(ImGuiCol_Button, ImVec4(ColorTransparent));
     ImGui::BeginDisabled(!layer || !layer->IsDirty() || layer->IsAnonymous());
     if (ImGui::Button(ICON_FA_SAVE)) {
-        //ExecuteAfterDraw<LayerRemoveSubLayer>(parent, layerPath);
+        ExecuteAfterDraw(&SdfLayer::Save, layer, false);
     }
+    // TODO it would be useful to have an option to save all the modified children
     ImGui::EndDisabled();
     ImGui::SameLine();
     ImGui::BeginDisabled(!parent);
@@ -111,6 +112,11 @@ static void DrawLayerSublayerTree(SdfLayerRefPtr layer, SdfLayerRefPtr parent, s
                                layer ? (layer->IsMuted() ? ImVec4(0.5, 0.5, 0.5, 1.0) : ImGui::GetStyleColorVec4(ImGuiCol_Text))
                                      : ImVec4(1.0, 0.2, 0.2, 1.0));
         unfolded = ImGui::TreeNodeEx(label.c_str(), treeNodeFlags);
+    }
+    if (ImGui::IsItemClicked()) {
+        if (ImGui::IsMouseDoubleClicked(0)) {
+            ExecuteAfterDraw<EditorFindOrOpenLayer>(layer->GetIdentifier());
+        }
     }
     DrawSublayerTreeNodePopupMenu(layer, parent, layerPath, stage);
 
