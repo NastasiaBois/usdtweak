@@ -19,9 +19,9 @@ Manipulator * MouseHoverManipulator::OnUpdate(Viewport &viewport) {
     else if (ImGui::IsKeyDown(ImGuiKey_F)) {
         const Selection &selection = viewport.GetSelection();
         if (!selection.IsSelectionEmpty(viewport.GetCurrentStage())) {
-            viewport.FrameSelection(viewport.GetSelection());
+            viewport.FrameCameraOnSelection(viewport.GetSelection());
         } else {
-            viewport.FrameRootPrim();
+            viewport.FrameCameraOnRootPrim();
         }
     } else {
         auto &manipulator = viewport.GetActiveManipulator();

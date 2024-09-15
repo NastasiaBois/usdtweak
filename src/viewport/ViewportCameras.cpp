@@ -66,7 +66,7 @@ static void DrawUsdGeomCameraEditor(const UsdGeomCamera &usdGeomCamera, UsdTimeC
 
 inline
 void InitPerspCamera(GfCamera &cam) {
-    // We init the perps camera even though it will be reset by the viewport on the next frame by FrameRootPrim
+    // We init the perps camera even though it will be reset by the viewport on the next frame by FrameCameraOnRootPrim
     GfMatrix4d mat;
     cam.SetProjection(GfCamera::Perspective);
     cam.SetClippingRange({1.f, 20000.f});
@@ -122,17 +122,30 @@ void ViewportCameras::DrawCameraEditor(const UsdStageRefPtr &stage, UsdTimeCode 
     }
 }
 
-void ViewportCameras::FindAndUseStageCamera(const UsdStageRefPtr &stage) {
+bool ViewportCameras::FindAndUseStageCamera(const UsdStageRefPtr &stage) {
     if (stage) {
         // TODO we might also want to find a RenderSettings node and use the camera if set
         UsdPrimRange range = stage->Traverse();
         for (const auto &prim: range) {
             if (prim.IsA<UsdGeomCamera>()) {
                 UseStageCamera(stage, prim.GetPath());
-                break;
+                return true;
             }
         }
     }
+    return false;
+}
+
+std::vector<GfCamera *> ViewportCameras::GetEditableCameras(const UsdStageRefPtr &stage) {
+    std::vector<GfCamera *> cameras;
+    const std::string stageId = stage ? stage->GetRootLayer()->GetIdentifier() : "";
+    auto camerasIt = _viewportCamerasPerStage.find(stageId);
+    if (camerasIt != _viewportCamerasPerStage.end()) {
+        for (GfCamera &camera: camerasIt->second._cameras) {
+            cameras.push_back(&camera);
+        }
+    }
+    return cameras;
 }
 
 // This could be UseStageCamera

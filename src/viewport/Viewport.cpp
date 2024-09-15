@@ -258,7 +258,7 @@ void Viewport::DrawManipulatorToolbox(const ImVec2 widgetPosition) {
 }
 
 /// Frame the viewport using the bounding box of the selection
-void Viewport::FrameSelection(const Selection &selection) { // Camera manipulator ???
+void Viewport::FrameCameraOnSelection(const Selection &selection) { // Camera manipulator ???
     if (GetCurrentStage() && !selection.IsSelectionEmpty(GetCurrentStage())) {
         UsdGeomBBoxCache bboxcache(_imagingSettings.frame, UsdGeomImageable::GetOrderedPurposeTokens());
         GfBBox3d bbox;
@@ -271,15 +271,32 @@ void Viewport::FrameSelection(const Selection &selection) { // Camera manipulato
 }
 
 /// Frame the viewport using the bounding box of the root prim
-void Viewport::FrameRootPrim(){
+void Viewport::FrameCameraOnRootPrim() {
     if (GetCurrentStage()) {
         UsdGeomBBoxCache bboxcache(_imagingSettings.frame, UsdGeomImageable::GetOrderedPurposeTokens());
         auto defaultPrim = GetCurrentStage()->GetDefaultPrim();
-        if(defaultPrim){
+        if (defaultPrim) {
             _cameraManipulator.FrameBoundingBox(GetEditableCamera(), bboxcache.ComputeWorldBound(defaultPrim));
         } else {
             auto rootPrim = GetCurrentStage()->GetPrimAtPath(SdfPath("/"));
             _cameraManipulator.FrameBoundingBox(GetEditableCamera(), bboxcache.ComputeWorldBound(rootPrim));
+        }
+    }
+}
+
+void Viewport::FrameAllCameras() {
+    if (GetCurrentStage()) {
+        UsdGeomBBoxCache bboxcache(_imagingSettings.frame, UsdGeomImageable::GetOrderedPurposeTokens());
+        auto defaultPrim = GetCurrentStage()->GetDefaultPrim();
+        if (defaultPrim) {
+            for (GfCamera *camera: _cameras.GetEditableCameras(GetCurrentStage())) {
+                _cameraManipulator.FrameBoundingBox(*camera, bboxcache.ComputeWorldBound(defaultPrim));
+            }
+        } else {
+            for (GfCamera *camera: _cameras.GetEditableCameras(GetCurrentStage())) {
+                auto rootPrim = GetCurrentStage()->GetPrimAtPath(SdfPath("/"));
+                _cameraManipulator.FrameBoundingBox(*camera, bboxcache.ComputeWorldBound(rootPrim));
+            }
         }
     }
 }
@@ -551,10 +568,15 @@ void Viewport::Update() {
         if (firstTimeStageLoaded) { //TODO C++20 [[unlikely]]
             // Find a camera in the stage and use it. We might want to make it optional as it slows
             // the first render
-            _cameras.FindAndUseStageCamera(GetCurrentStage());
-            // TODO: framing should probably move in the update as we want to also frame when an
-            // internal ortho camera is selected
-            FrameRootPrim();
+            if(!_cameras.FindAndUseStageCamera(GetCurrentStage())) {
+                // TODO: framing should probably move in the update as we want to also frame when an
+                // internal ortho camera is selected
+                // With the multiple viewport we might want to frame all cameras, not just the current one
+                //
+                FrameCameraOnRootPrim(); // TODO rename to FrameCurrentCamera
+                FrameAllCameras();
+            }
+
         }
     }
 

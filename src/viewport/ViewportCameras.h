@@ -27,7 +27,7 @@ public:
     //
     void DrawCameraList(const UsdStageRefPtr &stage);
     void DrawCameraEditor(const UsdStageRefPtr &stage, UsdTimeCode tc);
-    void FindAndUseStageCamera(const UsdStageRefPtr &stage);
+    bool FindAndUseStageCamera(const UsdStageRefPtr &stage);
 
     // Accessors
     std::string GetCurrentCameraName() const;
@@ -37,6 +37,11 @@ public:
     // in the main render loop.
     GfCamera & GetEditableCamera() { return *_renderCamera; }
     
+    // Return the editable cameras associated to stage (Persp, Front, Back, etc.)
+    // It is used only in the FrameAllCameras function. Ideally this should be refactored to avoid exposing
+    // the pointer to the internal cameras
+    std::vector<GfCamera *> GetEditableCameras(const UsdStageRefPtr &stage);
+
     // Same as above but const
     const GfCamera & GetCurrentCamera() const { return *_renderCamera; }
        

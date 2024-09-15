@@ -45,8 +45,9 @@ class Viewport final {
     void SetCurrentTimeCode(const UsdTimeCode &tc);
 
     /// Camera framing
-    void FrameSelection(const Selection &);
-    void FrameRootPrim();
+    void FrameCameraOnSelection(const Selection &);
+    void FrameCameraOnRootPrim();
+    void FrameAllCameras();
 
     /// Return the camera structure used to render the viewport which can be modified for reframing, movement, etc
     /// The modification is then applied to the actual camera data, prim or internal at the followin
