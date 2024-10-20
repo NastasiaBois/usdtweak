@@ -3,9 +3,11 @@
 #    cmake --build . --config RelWithDebInfo --target package
 #
 
-# We install the usd libraries in the lib folder
+# We install the usd libraries in the lib folder, let's add an rpath to them.
+# We also point to the python framework, assuming it is installed with xcode. See #21
+# TODO: Ideally we should copy the python libs in the application for portability.
 set_target_properties(usdtweak PROPERTIES
-  INSTALL_RPATH @executable_path/../lib
+  INSTALL_RPATH "@executable_path/../lib;/Applications/Xcode.app/Contents/Developer/Library/Frameworks/"
 )
 install(TARGETS usdtweak DESTINATION .)
 # RUNTIME_ARTIFACTS is not working properly or I don't understand what it is meant to do
