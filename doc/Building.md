@@ -68,7 +68,36 @@ If you have USD >= 22.08 compiled with MaterialX, you have to add an additional 
 
 ### Using NVidia's USD build (experimental)
 
-NVidia provides a USD build [here](https://developer.nvidia.com/usd) if you don't want to compile USD yourself. It needs either VisualStudio 2017 or a more recent version (2019, 2022) with the "MSVC141 - C++ build tools x86/x64" installed. The cmake commands to build usdtweak differ, if you have a more recent version you'll need to specify the toolkit using `-T v141`. The Nvidia USD build also needs Python3.7, set the `USE_PYTHON3` argument to force cmake to look after Python3, but you'll have to make sure Python3.7 is installed already.
+NVidia provides a USD build [here](https://developer.nvidia.com/usd) if you don't want to compile USD yourself. We tested 2 versions, 22.11 and 24.08.
+
+#### USD 24.08
+
+This was tested on windows with MSVC2019. Unfortunatelly the configuration coming with the nvidia libraries doesn't have the correct python directories, so the cmake command is a bit more involved than with 22.11. Make sure you type the following commands in a x64 Native Tools commands prompt and replace `C:\path\to\nvidia-usd-24.08` by the actual path containing the nvidia usd libraries.
+
+    git clone https://github.com/cpichard/usdtweak
+    cd usdtweak
+    git checkout develop
+    mkdir build
+    cd build
+    cmake -G "Visual Studio 16 2019" -A x64 -Dpxr_DIR=C:\path\to\nvidia-usd-24.08 -DPython3_EXECUTABLE=C:\path\to\nvidia-usd-24.08\python\python.exe -DPython3_LIBRARY=C:\path\to\nvidia-usd-24.08\python\libs\python310.lib -DPython3_INCLUDE_DIR=C:\path\to\nvidia-usd-24.08\python\include -DPython3_VERSION="3.10.14" -DMaterialX_DIR=C:\path\to\nvidia-usd-24.08\lib\cmake\MaterialX -DImath_DIR=C:\path\to\nvidia-usd-24.08\lib\cmake\Imath ..
+
+Then compile with:
+
+    cmake --build . --config RelWithDebInfo
+
+The build will fail with the following error:
+
+    LINK : fatal error LNK1104: cannot open file 'C:\path\to\nvidia-usd-24.08\lib\osdGPU.lib' [C:\path\to\usdtweak\build-24.08-nvidia\usdtweak.vcxproj]
+
+This is because the libraries `osdGPU.lib` and `osdCPU.lib` are not included in this nvidia release, but they are listed as dependencies in the configuration. To fix this problem you'll have to edit the file `C:\path\to\nvidia-usd-24.08\cmake\pxrTargets.cmake` and remove all occurence of `${_IMPORT_PREFIX}/lib/osdGPU.lib;` and all occurence of `${_IMPORT_PREFIX}/lib/osdCPU.lib;`. Once it's done you can recompile with
+
+    cmake --build . --config RelWithDebInfo
+
+And you should get usdtweak.exe compiled in the RelWithDebInfo folder. 
+
+#### USD 22.11
+
+It needs either VisualStudio 2017 or a more recent version (2019, 2022) with the "MSVC141 - C++ build tools x86/x64" installed. The cmake commands to build usdtweak differ, if you have a more recent version you'll need to specify the toolkit using `-T v141`. The Nvidia USD build also needs Python3.7, set the `USE_PYTHON3` argument to force cmake to look after Python3, but you'll have to make sure Python3.7 is installed already.
 
     cmake  -G "Visual Studio 16 2019" -T v141 -A x64 -Dpxr_DIR=C:\path\to\nvidia-usd-22.11 -DMaterialX_DIR=C:\path\to\nvidia-usd-22.11\lib\cmake\MaterialX -DUSE_PYTHON3=ON ..
     cmake --build . --config Release
