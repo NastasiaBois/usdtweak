@@ -35,7 +35,7 @@ PositionManipulator::~PositionManipulator() {}
 bool PositionManipulator::IsMouseOver(const Viewport &viewport) {
 
     if (_xformAPI || _xformable) {
-        const auto &frustum = viewport.GetCurrentCamera().GetFrustum();
+        const auto &frustum = viewport.GetViewportCamera().GetFrustum();
         const auto mv = frustum.ComputeViewMatrix();
         const auto proj = frustum.ComputeProjectionMatrix();
 
@@ -125,7 +125,7 @@ template <int Axis> inline ImColor AxisColor(int selectedAxis) {
 void PositionManipulator::OnDrawFrame(const Viewport &viewport) {
 
     if (_xformAPI || _xformable) {
-        const auto &frustum = viewport.GetCurrentCamera().GetFrustum();
+        const auto &frustum = viewport.GetViewportCamera().GetFrustum();
         const auto mv = frustum.ComputeViewMatrix();
         const auto proj = frustum.ComputeProjectionMatrix();
 
@@ -220,7 +220,7 @@ void PositionManipulator::ProjectMouseOnAxis(const Viewport &viewport, GfVec3d &
         GfVec3d rayPoint;
         double a = 0;
         double b = 0;
-        const auto &frustum = viewport.GetCurrentCamera().GetFrustum();
+        const auto &frustum = viewport.GetViewportCamera().GetFrustum();
         const auto mouseRay = frustum.ComputeRay(viewport.GetMousePosition());
         GfFindClosestPoints(mouseRay, _axisLine, &rayPoint, &linePoint, &a, &b);
     }

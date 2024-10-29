@@ -54,8 +54,11 @@ class Viewport final {
     /// Update() call.
     GfCamera &GetEditableCamera();
 
-    /// Return the const camera structure used to render the viewport.
+    /// Return the camera selected by the user.
     const GfCamera &GetCurrentCamera() const;
+    
+    /// Return the camera used to render the viewport. TODO make it const &
+    GfCamera GetViewportCamera() const;
     
     /// Returns the path of the selected stage camera or SdfPath() if the camera is internal
     inline const SdfPath &GetSelectedStageCameraPath () { return _cameras.GetStageCameraPath(); }

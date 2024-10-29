@@ -422,6 +422,7 @@ void Viewport::HandleManipulationEvents() {
 GfCamera &Viewport::GetEditableCamera() { return _cameras.GetEditableCamera(); }
 const GfCamera &Viewport::GetCurrentCamera() const { return _cameras.GetCurrentCamera(); }
 
+// TODO: keep the viewport camera in a variable and avoid recomputing it when not necessary
 GfCamera Viewport::GetViewportCamera(double width, double height) const {
     GfCamera viewportCamera = GetCurrentCamera();
     if (viewportCamera.GetProjection() == GfCamera::Perspective) {
@@ -434,6 +435,14 @@ GfCamera Viewport::GetViewportCamera(double width, double height) const {
                                                                    GfCamera::FOVVertical);
      }
     return viewportCamera;
+}
+
+// TODO: keep the viewport camera in the structure and return a const ref
+GfCamera Viewport::GetViewportCamera() const {
+    GfVec2i renderSize = _drawTarget->GetSize();
+    const int width = renderSize[0];
+    const int height = renderSize[1];
+    return GetViewportCamera(width, height);
 }
 
 void Viewport::BeginHydraUI(int width, int height) {

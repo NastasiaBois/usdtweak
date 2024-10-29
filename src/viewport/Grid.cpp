@@ -54,7 +54,7 @@ void Grid::SetZIsUp(bool zIsUp) {
 
 
 void Grid::Render(Viewport &viewport) {
-    const auto &camera = viewport.GetCurrentCamera();
+    const auto &camera = viewport.GetViewportCamera();
     auto mv = camera.GetFrustum().ComputeViewMatrix();
     auto proj = camera.GetFrustum().ComputeProjectionMatrix();
     glEnable(GL_BLEND);

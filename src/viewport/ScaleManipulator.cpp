@@ -20,7 +20,7 @@ ScaleManipulator::~ScaleManipulator() {}
 bool ScaleManipulator::IsMouseOver(const Viewport &viewport) {
 
     if (_xformable) {
-        const auto &frustum = viewport.GetCurrentCamera().GetFrustum();
+        const auto &frustum = viewport.GetViewportCamera().GetFrustum();
         const auto mv = frustum.ComputeViewMatrix();
         const auto proj = frustum.ComputeProjectionMatrix();
 
@@ -100,7 +100,7 @@ template <int Axis> inline ImColor AxisColor(int selectedAxis) {
 void ScaleManipulator::OnDrawFrame(const Viewport &viewport) {
 
     if (_xformable) {
-        const auto &frustum = viewport.GetCurrentCamera().GetFrustum();
+        const auto &frustum = viewport.GetViewportCamera().GetFrustum();
         const auto mv = frustum.ComputeViewMatrix();
         const auto proj = frustum.ComputeProjectionMatrix();
 
@@ -213,7 +213,7 @@ void ScaleManipulator::ProjectMouseOnAxis(const Viewport &viewport, GfVec3d &lin
         GfVec3d rayPoint;
         double a = 0;
         double b = 0;
-        const auto &frustum = viewport.GetCurrentCamera().GetFrustum();
+        const auto &frustum = viewport.GetViewportCamera().GetFrustum();
         const auto mouseRay = frustum.ComputeRay(viewport.GetMousePosition());
         GfFindClosestPoints(mouseRay, _axisLine, &rayPoint, &linePoint, &a, &b);
     }

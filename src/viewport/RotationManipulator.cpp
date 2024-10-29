@@ -50,7 +50,7 @@ bool RotationManipulator::IsMouseOver(const Viewport &viewport) {
 
     if (_xformable) {
         const GfVec2d mousePosition = viewport.GetMousePosition();
-        const auto &frustum = viewport.GetCurrentCamera().GetFrustum();
+        const auto &frustum = viewport.GetViewportCamera().GetFrustum();
         const GfRay ray = frustum.ComputeRay(mousePosition);
         const auto manipulatorCoordinates = ComputeManipulatorToWorldTransform(viewport);
         const GfVec3d xAxis = manipulatorCoordinates.GetRow3(0);
@@ -158,7 +158,7 @@ template <int Axis> inline ImColor AxisColor(int selectedAxis) {
 void RotationManipulator::OnDrawFrame(const Viewport &viewport) {
 
     if (_xformable) {
-        const auto &camera = viewport.GetCurrentCamera();
+        const auto &camera = viewport.GetViewportCamera();
         auto mv = camera.GetFrustum().ComputeViewMatrix();
         auto proj = camera.GetFrustum().ComputeProjectionMatrix();
         auto manipulatorCoordinates = ComputeManipulatorToWorldTransform(viewport);
@@ -197,7 +197,7 @@ GfVec3d RotationManipulator::ComputeClockHandVector(Viewport &viewport) {
     double distance = 0.0;
 
     const GfVec2d mousePosition = viewport.GetMousePosition();
-    const GfFrustum frustum = viewport.GetCurrentCamera().GetFrustum();
+    const GfFrustum frustum = viewport.GetViewportCamera().GetFrustum();
     const GfRay ray = frustum.ComputeRay(mousePosition);
     if (ray.Intersect(plane, &distance)) {
         const auto intersection = ray.GetPoint(distance);
