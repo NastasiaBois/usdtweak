@@ -18,6 +18,11 @@ endif()
 if (DEFINED glfw3_DIR)
     find_package(glfw3 3.4 REQUIRED)
 else ()
+    # Fix the DOWNLOAD_EXTRACT_TIMESTAMP warning on cmake 3.23+
+    if(POLICY CMP0135)
+        cmake_policy(SET CMP0135 NEW)
+        set(CMAKE_POLICY_DEFAULT_CMP0135 NEW)
+    endif()
     include(FetchContent)
     FetchContent_Declare(
         glfw
