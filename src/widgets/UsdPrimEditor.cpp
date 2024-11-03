@@ -229,6 +229,7 @@ void DrawUsdRelationshipList(const UsdRelationship &relationship) {
     //}
     relationship.GetTargets(&targets);
     if (!targets.empty()) {
+        ImGui::PushID(relationship.GetPath().GetString().c_str());
         if (ImGui::BeginListBox("##Relationship", ImVec2(-FLT_MIN, targets.size() * 25))) {
             for (const auto &path : targets) {
                 ImGui::PushID(path.GetString().c_str());
@@ -238,10 +239,15 @@ void DrawUsdRelationshipList(const UsdRelationship &relationship) {
                 ImGui::SameLine();
                 std::string buffer = path.GetString();
                 ImGui::InputText("##EditRelation", &buffer);
+                if (ImGui::IsItemDeactivatedAfterEdit() && buffer != path.GetString()) {
+                    // RemoveTarget and add newTarget
+                    ExecuteAfterDraw<RelationshipReplace>(relationship, path, SdfPath(buffer));
+                }
                 ImGui::PopID();
             }
             ImGui::EndListBox();
         }
+        ImGui::PopID();
     }
 }
 

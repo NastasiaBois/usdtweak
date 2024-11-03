@@ -78,6 +78,8 @@ struct AttributeSet;
 struct AttributeCreateDefaultValue;
 struct AttributeConnect;
 
+struct RelationshipReplace;
+
 struct UsdFunctionCall; // This should be name a SdfLayerFunctionCall to be precise
 
 // Commands using the usd APIs

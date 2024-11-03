@@ -96,3 +96,26 @@ struct AttributeConnect : public SdfLayerCommand {
     SdfPath _tail;
 };
 template void ExecuteAfterDraw<AttributeConnect>(UsdStageWeakPtr stage, SdfPath tail, SdfPath head);
+
+
+struct RelationshipReplace : public SdfLayerCommand {
+    RelationshipReplace(UsdRelationship rel, SdfPath before, SdfPath after) :
+    _rel(rel), _before(before), _after(after){}
+    
+    bool DoIt() override {
+        if (_rel) {
+            auto layer = _rel.GetStage()->GetEditTarget().GetLayer();
+            if (layer) {
+                SdfCommandGroupRecorder recorder(_undoCommands, layer);
+                _rel.RemoveTarget(_before);
+                _rel.AddTarget(_after);
+                return true;
+            }
+        }
+        return false;
+    }
+    UsdRelationship _rel;
+    SdfPath _before;
+    SdfPath _after;
+};
+template void ExecuteAfterDraw<RelationshipReplace>(UsdRelationship rel, SdfPath before, SdfPath after);
