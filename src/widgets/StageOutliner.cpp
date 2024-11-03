@@ -175,7 +175,7 @@ static void DrawVisibilityButton(const UsdPrim &prim) {
     // TODO: this should work with animation
     UsdGeomImageable imageable(prim);
     if (imageable) {
-        ImGui::PushID(prim.GetPath().GetHash());
+        ImGui::PushID(IdOf(prim.GetPath().GetHash()));
         // Get visibility value
         auto attr = imageable.GetVisibilityAttr();
         VtValue visibleValue;

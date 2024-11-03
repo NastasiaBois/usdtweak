@@ -113,7 +113,7 @@ GfMatrix4d RotationManipulator::ComputeManipulatorToWorldTransform(const Viewpor
 // critical at this point. Use a binary search algorithm on rotated array to find the begining of the visible part,
 // then iterate but with less resolution (1 point every 3 samples for example)
 template <int axis>
-inline static size_t ProjectHalfCircle(const std::vector<GfVec2d> &_manipulatorCircles, double scale,
+inline static int ProjectHalfCircle(const std::vector<GfVec2d> &_manipulatorCircles, double scale,
                                        const GfVec3d &cameraPosition, const GfVec4d &manipulatorOrigin, const GfMatrix4d &mv,
                                        const GfMatrix4d &proj, const GfVec2d &textureSize, const GfMatrix4d &toWorld,
                                        std::vector<ImVec2> &_manipulator2dPoints) {
@@ -133,7 +133,7 @@ inline static size_t ProjectHalfCircle(const std::vector<GfVec2d> &_manipulatorC
             _manipulator2dPoints.emplace_back(pointInPixelSpace[0], pointInPixelSpace[1]);
         } else {
             if (rotateIndex == -1 && _manipulator2dPoints.size() > circleBegin) {
-                rotateIndex = _manipulator2dPoints.size();
+                rotateIndex = static_cast<int>(_manipulator2dPoints.size());
             }
         }
     };
@@ -144,7 +144,7 @@ inline static size_t ProjectHalfCircle(const std::vector<GfVec2d> &_manipulatorC
                     _manipulator2dPoints.begin() + circleBegin + rotateIndex - circleBegin, _manipulator2dPoints.end());
         rotateIndex = -1;
     }
-    return _manipulator2dPoints.size();
+    return static_cast<int>(_manipulator2dPoints.size());
 };
 
 template <int Axis> inline ImColor AxisColor(int selectedAxis) {
@@ -177,12 +177,12 @@ void RotationManipulator::OnDrawFrame(const Viewport &viewport) {
         const GfVec4d manipulatorOrigin = GfVec4d(origin[0], origin[1], origin[2], 1.0);
         // Fill _manipulator2dPoints
         _manipulator2dPoints.clear();
-        const size_t xEnd = ProjectHalfCircle<0>(_manipulatorCircles, scale, cameraPosition, manipulatorOrigin, mv, proj,
-                                                 textureSize, toWorld, _manipulator2dPoints);
-        const size_t yEnd = ProjectHalfCircle<1>(_manipulatorCircles, scale, cameraPosition, manipulatorOrigin, mv, proj,
-                                                 textureSize, toWorld, _manipulator2dPoints);
-        const size_t zEnd = ProjectHalfCircle<2>(_manipulatorCircles, scale, cameraPosition, manipulatorOrigin, mv, proj,
-                                                 textureSize, toWorld, _manipulator2dPoints);
+        const int xEnd = ProjectHalfCircle<0>(_manipulatorCircles, scale, cameraPosition, manipulatorOrigin, mv, proj,
+                                              textureSize, toWorld, _manipulator2dPoints);
+        const int yEnd = ProjectHalfCircle<1>(_manipulatorCircles, scale, cameraPosition, manipulatorOrigin, mv, proj,
+                                              textureSize, toWorld, _manipulator2dPoints);
+        const int zEnd = ProjectHalfCircle<2>(_manipulatorCircles, scale, cameraPosition, manipulatorOrigin, mv, proj,
+                                              textureSize, toWorld, _manipulator2dPoints);
 
         draw_list->AddPolyline(_manipulator2dPoints.data(), xEnd, AxisColor<XAxis>(_selectedAxis), ImDrawFlags_None, 3);
         draw_list->AddPolyline(_manipulator2dPoints.data() + xEnd, yEnd - xEnd, AxisColor<YAxis>(_selectedAxis), ImDrawFlags_None, 3);

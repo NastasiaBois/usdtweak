@@ -32,7 +32,7 @@ struct ScopedStyleColor {
         ImGui::PopStyleColor(nbPop);
     }
 
-    const size_t nbPop; // TODO: get rid of this constant and generate the correct number of pop at compile time
+    const int nbPop; // TODO: get rid of this constant and generate the correct number of pop at compile time
 };
 
 /// Creates a splitter

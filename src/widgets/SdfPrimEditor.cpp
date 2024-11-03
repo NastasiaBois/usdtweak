@@ -35,6 +35,9 @@
 #include "VtDictionaryEditor.h"
 #include "VtValueEditor.h"
 
+#define SdfPrimEditorSeed 6353032
+#define IdOf ToImGuiID<SdfPrimEditorSeed, size_t>
+
 //// NOTES: Sdf API: Removing a variantSet and cleaning it from the list editing
 //// -> https://groups.google.com/g/usd-interest/c/OeqtGl_1H-M/m/xjCx3dT9EgAJ
 
@@ -667,7 +670,7 @@ void DrawPrimSpecAttributes(const SdfPrimSpecHandle &primSpec, const Selection &
         int rowId = 0;
         if (BeginThreeColumnsTable("##DrawPrimSpecAttributes")) {
             SetupThreeColumnsTable(false, "", "Attribute", "");
-            ImGui::PushID(primSpec->GetPath().GetHash());
+            ImGui::PushID(IdOf(primSpec->GetPath().GetHash()));
             // the third column allows to show different attribute properties:
             // Default value, keyed values or connections (and summary ??)
             // int showWhat = DrawValueColumnSelector();
@@ -736,7 +739,7 @@ void DrawPrimSpecRelations(const SdfPrimSpecHandle &primSpec) {
             SetupThreeColumnsTable(false, "", "Relations", "");
             auto relations = primSpec->GetRelationships();
             for (const SdfRelationshipSpecHandle &relation : relations) {
-                ImGui::PushID(relation->GetPath().GetHash());
+                ImGui::PushID(IdOf(relation->GetPath().GetHash()));
                 DrawThreeColumnsRow<RelationRow>(rowId++, primSpec, relation);
                 ImGui::PopID();
             }
@@ -796,7 +799,7 @@ void DrawPrimSpecMetadata(const SdfPrimSpecHandle &primSpec) {
             int rowId = 0;
             if (BeginThreeColumnsTable("##DrawPrimSpecMetadata")) {
                 SetupThreeColumnsTable(false, "", "Metadata", "Value");
-                ImGui::PushID(primSpec->GetPath().GetHash());
+                ImGui::PushID(IdOf(primSpec->GetPath().GetHash()));
                 DrawThreeColumnsRow<Specifier>(rowId++, primSpec);
                 DrawThreeColumnsRow<PrimType>(rowId++, primSpec);
                 DrawThreeColumnsRow<PrimName>(rowId++, primSpec);
