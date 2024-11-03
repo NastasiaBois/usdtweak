@@ -577,7 +577,7 @@ void Viewport::Update() {
         if (firstTimeStageLoaded) { //TODO C++20 [[unlikely]]
             // Find a camera in the stage and use it. We might want to make it optional as it slows
             // the first render
-            if(!_cameras.FindAndUseStageCamera(GetCurrentStage())) {
+            if(!_cameras.FindAndUseStageCamera(GetCurrentStage(), GetCurrentTimeCode())) {
                 // TODO: framing should probably move in the update as we want to also frame when an
                 // internal ortho camera is selected
                 // With the multiple viewport we might want to frame all cameras, not just the current one

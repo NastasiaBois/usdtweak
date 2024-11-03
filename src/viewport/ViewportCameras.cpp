@@ -122,13 +122,15 @@ void ViewportCameras::DrawCameraEditor(const UsdStageRefPtr &stage, UsdTimeCode 
     }
 }
 
-bool ViewportCameras::FindAndUseStageCamera(const UsdStageRefPtr &stage) {
+bool ViewportCameras::FindAndUseStageCamera(const UsdStageRefPtr &stage,  UsdTimeCode tc) {
     if (stage) {
         // TODO we might also want to find a RenderSettings node and use the camera if set
         UsdPrimRange range = stage->Traverse();
         for (const auto &prim: range) {
             if (prim.IsA<UsdGeomCamera>()) {
-                UseStageCamera(stage, prim.GetPath());
+                const auto stageCameraPrim = UsdGeomCamera::Get(stage, prim.GetPath());
+                UseInternalCamera(stage, ViewportPerspective);
+                *_renderCamera = stageCameraPrim.GetCamera(tc);
                 return true;
             }
         }

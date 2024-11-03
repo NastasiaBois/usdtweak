@@ -27,7 +27,7 @@ public:
     //
     void DrawCameraList(const UsdStageRefPtr &stage);
     void DrawCameraEditor(const UsdStageRefPtr &stage, UsdTimeCode tc);
-    bool FindAndUseStageCamera(const UsdStageRefPtr &stage);
+    bool FindAndUseStageCamera(const UsdStageRefPtr &stage, UsdTimeCode tc);
 
     // Accessors
     std::string GetCurrentCameraName() const;
