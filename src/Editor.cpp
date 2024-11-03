@@ -97,24 +97,24 @@ struct AboutModalDialog : public ModalDialog {
     void Draw() override {
         ImGui::Text("usdtweak pre-alpha version %s", GetBuildDate());
         ImGui::Text("  revision %s", GetGitHash());
-        ImGui::Text("");
+        ImGui::NewLine();
         ImGui::Text("This is a pre-alpha version for testing purpose.");
         ImGui::Text("Please send your feedbacks as github issues:");
         ImGui::Text("https://github.com/cpichard/usdtweak/issues");
         ImGui::Text("or by mail: cpichard.github@gmail.com");
-        ImGui::Text("");
+        ImGui::NewLine();
         ImGui::Text("usdtweak - Copyright (c) 2016-2024 Cyril Pichard - Apache License 2.0");
-        ImGui::Text("");
+        ImGui::NewLine();
         ImGui::Text("USD " USD_VERSION " - https://github.com/PixarAnimationStudios/USD");
         ImGui::Text("   Copyright (c) 2016-2024 Pixar - Modified Apache 2.0 License");
-        ImGui::Text("");
+        ImGui::NewLine();
         ImGui::Text("IMGUI - https://github.com/ocornut/imgui");
         ImGui::Text("   Copyright (c) 2014-2024 Omar Cornut - The MIT License (MIT)");
-        ImGui::Text("");
+        ImGui::NewLine();
         ImGui::Text("GLFW - https://www.glfw.org/");
         ImGui::Text("   Copyright © 2002-2006 Marcus Geelnard - The zlib/libpng License ");
         ImGui::Text("   Copyright © 2006-2019 Camilla Löwy - The zlib/libpng License ");
-        ImGui::Text("");
+        ImGui::NewLine();
         if (ImGui::Button("  Close  ")) {
             CloseModal();
         }

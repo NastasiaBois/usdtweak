@@ -89,6 +89,9 @@ target_compile_options(usdtweak PRIVATE
 	$<$<CXX_COMPILER_ID:MSVC>:/MP /wd4244 /wd4305 /wd4996>
 	$<$<CXX_COMPILER_ID:GNU>:-Wno-deprecated>)
 
+# Remove TBB deprecation warnings
+add_compile_definitions(TBB_SUPPRESS_DEPRECATED_MESSAGES)
+
 # Fix compilation error with C++17 on macos
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND CMAKE_CXX_STANDARD MATCHES "17")
     add_compile_definitions(_LIBCPP_ENABLE_CXX17_REMOVED_UNARY_BINARY_FUNCTION)
