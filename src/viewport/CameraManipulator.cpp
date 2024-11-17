@@ -35,21 +35,27 @@ Manipulator *CameraManipulator::OnUpdate(Viewport &viewport) {
     } else if (ImGui::IsMouseClicked(1)) {
         SetMovementType(MovementType::Dolly);
     }
-    auto &currentCamera = viewport.GetEditableCamera();
-    // TODO: we could make a different camera manipulator for the ortho case instead of testing the camera type here
-    // as we don't need some off the movement types
-    // TODO: Remove move ortho cam, just skip if internal and orbit
-//    if (viewport.IsEditingInternalOrthoCamera()) {
-//        MoveOrthoCamera(currentCamera, io.MouseDelta.x, io.MouseDelta.y);
-//    } else {
-
-        if (Move(currentCamera, io.MouseDelta.x, io.MouseDelta.y)) {
-            if (viewport.IsEditingStageCamera() && _stageCamera) {
-                // This is going to fill the undo/redo buffer :S
-                _stageCamera.SetFromCamera(currentCamera, viewport.GetCurrentTimeCode());
-            }
+    GfCamera &currentCamera = viewport.GetEditableCamera();
+    // EDITABLE CAMERA should be the camera used for the viewport
+    // After edition:
+    // The internal and stage cameras should copy only the position and focus, etc, not frustum
+    // or anything related to the viewport size.
+    // OR ....
+    // We edit the internal camera, but then we need the viewport info and viewport camera
+    //
+    // The camera manipulator need the viewport camera to compute the motion diffs
+    //
+    
+    
+    if (Move(currentCamera, io.MouseDelta.x, io.MouseDelta.y)) {
+            
+        // TODO: viewport.CommitEditableCamera(currentCamera);
+        // and remove below
+        if (viewport.IsEditingStageCamera() && _stageCamera) {
+            // This is going to fill the undo/redo buffer :S
+            _stageCamera.SetFromCamera(currentCamera, viewport.GetCurrentTimeCode());
         }
-//    }
+    }
 
     return this;
 }

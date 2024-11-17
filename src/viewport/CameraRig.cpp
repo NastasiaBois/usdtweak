@@ -66,7 +66,7 @@ void CameraRig::ResetPosition(GfCamera &camera) {
         constexpr float focusDistance = 100.f;
         camera.SetFocusDistance(focusDistance);
     } else if (camera.GetProjection() == GfCamera::Orthographic) {
-        camera.SetOrthographicFromAspectRatioAndSize(16.0 / 9.0, camera.GetVerticalAperture() * GfCamera::APERTURE_UNIT,
+        camera.SetOrthographicFromAspectRatioAndSize(16.0 / 9.0, camera.GetHorizontalAperture() * GfCamera::APERTURE_UNIT,
                                                      GfCamera::FOVHorizontal);
     }
 }
@@ -133,13 +133,12 @@ bool CameraRig::Move(GfCamera &camera, double deltaX, double deltaY) {
         auto up = frustum.ComputeUpVector();
         auto cameraAxis = frustum.ComputeViewDirection();
         auto right = GfCross(cameraAxis, up);
-        // Pixel to world - usdview behavior
         double pixelToWorld = 1.0;
+        const GfRange2d &window = frustum.GetWindow();
         if (camera.GetProjection() == GfCamera::Orthographic) {
-            pixelToWorld = camera.GetVerticalAperture() * GfCamera::APERTURE_UNIT / static_cast<double>(_viewportSize[1]);
+            pixelToWorld = window.GetSize()[0] * 2.0 / static_cast<double>(_viewportSize[0]);
         } else {
-            const GfRange2d &window = frustum.GetWindow();
-            pixelToWorld = window.GetSize()[1] * _dist / static_cast<double>(_viewportSize[1]);
+            pixelToWorld = window.GetSize()[0] * _dist / static_cast<double>(_viewportSize[0]);
         }
         center += -deltaX * right * pixelToWorld + deltaY * up * pixelToWorld;
         ToCameraTransform(camera, _zUpMatrix, center, rotation, _dist);

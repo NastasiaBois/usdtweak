@@ -98,7 +98,7 @@ ViewportCameras::OwnedCameras::OwnedCameras () {
     InitOrthoCamera(_cameras[ViewportBack], {0.0, 1.0, 0.0}, 180.f, {0.0, 0.0, 10000.f});
 }
 
-std::unordered_map<std::string, ViewportCameras::OwnedCameras> ViewportCameras::_viewportCamerasPerStage = {};
+//std::unordered_map<std::string, ViewportCameras::OwnedCameras> ViewportCameras::_viewportCamerasPerStage = {};
 
 ViewportCameras::ViewportCameras() {
     // Create the no stage camera
