@@ -379,6 +379,20 @@ void DrawPrimHidden(const SdfPrimSpecHandle &primSpec) {
     }
 }
 
+void DrawPrimDisplayName(const SdfPrimSpecHandle &primSpec) {
+    if (!primSpec)
+        return;
+    VtValue displayNameValue = primSpec->GetInfo(SdfFieldKeys->DisplayName);
+    std::string displayName;
+    if (displayNameValue.IsHolding<std::string>()) {
+        displayName = displayNameValue.UncheckedGet<std::string>();
+    }
+    ImGui::InputText("Display Name", &displayName);
+    if (ImGui::IsItemDeactivatedAfterEdit()) {
+        ExecuteAfterDraw(&SdfPrimSpec::SetInfo, primSpec, SdfFieldKeys->DisplayName, VtValue(displayName));
+    }
+}
+
 void DrawPrimActive(const SdfPrimSpecHandle &primSpec) {
     if (!primSpec)
         return;
@@ -792,6 +806,7 @@ GENERATE_FIELD_WITH_BUTTON(PrimKind, SdfFieldKeys->Kind, "Kind", DrawPrimKind);
 GENERATE_FIELD_WITH_BUTTON(PrimActive, SdfFieldKeys->Active, "Active", DrawPrimActive);
 GENERATE_FIELD_WITH_BUTTON(PrimInstanceable, SdfFieldKeys->Instanceable, "Instanceable", DrawPrimInstanceable);
 GENERATE_FIELD_WITH_BUTTON(PrimHidden, SdfFieldKeys->Hidden, "Hidden", DrawPrimHidden);
+GENERATE_FIELD_WITH_BUTTON(PrimDisplayName, SdfFieldKeys->DisplayName, "DisplayName", DrawPrimDisplayName);
 
 void DrawPrimSpecMetadata(const SdfPrimSpecHandle &primSpec) {
     if (!primSpec->GetPath().IsPrimVariantSelectionPath()) {
@@ -807,6 +822,7 @@ void DrawPrimSpecMetadata(const SdfPrimSpecHandle &primSpec) {
                 DrawThreeColumnsRow<PrimActive>(rowId++, primSpec);
                 DrawThreeColumnsRow<PrimInstanceable>(rowId++, primSpec);
                 DrawThreeColumnsRow<PrimHidden>(rowId++, primSpec);
+                DrawThreeColumnsRow<PrimDisplayName>(rowId++, primSpec);
                 DrawThreeColumnsRow<ApiSchemaRow>(rowId++, primSpec);
                 DrawThreeColumnsDictionaryEditor<SdfPrimSpec>(rowId, primSpec, SdfFieldKeys->CustomData);
                 DrawThreeColumnsDictionaryEditor<SdfPrimSpec>(rowId, primSpec, SdfFieldKeys->AssetInfo);
