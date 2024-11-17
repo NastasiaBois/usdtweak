@@ -87,7 +87,6 @@ void InitOrthoCamera(GfCamera &cam, const GfVec3d &axis, double angle, const GfV
 }
 
 ViewportCameras::OwnedCameras::OwnedCameras () {
-    GfMatrix4d mat;
     // TODO: change init depending on the stage orientation (up axis)
     InitPerspCamera(_cameras[ViewportPerspective]);
     InitOrthoCamera(_cameras[ViewportTop], {1.0, 0.0, 0.0}, -90.f, {0.0, 10000.f, 0.0});
@@ -173,14 +172,23 @@ void ViewportCameras::UseInternalCamera(const UsdStageRefPtr &stage, CameraType 
 //   - the user might have modified the current camera
 // This function should handle all those cases
 void ViewportCameras::Update(const UsdStageRefPtr &stage, UsdTimeCode tc) {
-    
+
     if (stage != _currentStage) {
         // The stage has changed, update the current configuration and the stage
-        _currentConfig = & _perStageConfiguration[stage->GetRootLayer()->GetIdentifier()];
+        // If this is the first time we see the stage, we keep the same camera type
+        const auto foundConfig = _perStageConfiguration.find(stage->GetRootLayer()->GetIdentifier());
+        if (foundConfig != _perStageConfiguration.end()) {
+            _currentConfig = &foundConfig->second;
+        } else {
+            auto prevCameraType = _currentConfig->_renderCameraType;
+            _currentConfig = &_perStageConfiguration[stage->GetRootLayer()->GetIdentifier()];
+            _currentConfig->_renderCameraType = prevCameraType;
+        }
+
         _currentStage = stage;
         _ownedCameras = &_viewportCamerasPerStage[stage->GetRootLayer()->GetIdentifier()];
     }
-    
+
     // TODO may be we should just check if the TC have changed
     // and in that case update the internals ?
     // Although the camera can be modified outside in the parameter editor,
