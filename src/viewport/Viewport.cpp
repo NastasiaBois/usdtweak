@@ -419,21 +419,25 @@ void Viewport::HandleManipulationEvents() {
 }
 
 
+GfVec2i Viewport::GetViewportSize() const {
+    return  _drawTarget->GetSize();
+}
+
 GfCamera &Viewport::GetEditableCamera() { return _cameras.GetEditableCamera(); }
 const GfCamera &Viewport::GetCurrentCamera() const { return _cameras.GetCurrentCamera(); }
 
 // TODO: keep the viewport camera in a variable and avoid recomputing it when not necessary
 GfCamera Viewport::GetViewportCamera(double width, double height) const {
     GfCamera viewportCamera = GetCurrentCamera();
+
     if (viewportCamera.GetProjection() == GfCamera::Perspective) {
-        viewportCamera.SetPerspectiveFromAspectRatioAndFieldOfView(width / height,
-                                                                   viewportCamera.GetFieldOfView(GfCamera::FOVVertical),
-                                                                         GfCamera::FOVVertical);
-     } else { // assuming ortho
-         viewportCamera.SetOrthographicFromAspectRatioAndSize(width / height,
-                                                              viewportCamera.GetVerticalAperture() * GfCamera::APERTURE_UNIT,
-                                                                   GfCamera::FOVVertical);
-     }
+        viewportCamera.SetPerspectiveFromAspectRatioAndFieldOfView(
+            width / height, viewportCamera.GetFieldOfView(GfCamera::FOVHorizontal), GfCamera::FOVHorizontal);
+    } else { // assuming ortho
+        viewportCamera.SetOrthographicFromAspectRatioAndSize(
+            width / height, viewportCamera.GetHorizontalAperture() * GfCamera::APERTURE_UNIT, GfCamera::FOVHorizontal);
+    }
+
     return viewportCamera;
 }
 
@@ -517,17 +521,20 @@ void Viewport::Render() {
         _renderer->SetRenderBufferSize(renderSize);
         _renderer->SetFraming(framing);
 #if PXR_VERSION <= 2311
-        _renderer->SetOverrideWindowPolicy(std::make_pair(true, CameraUtilConformWindowPolicy::CameraUtilMatchVertically));
+        _renderer->SetOverrideWindowPolicy(std::make_pair(true, CameraUtilConformWindowPolicy::CameraUtilMatchHorizontally));
 #else
-        _renderer->SetOverrideWindowPolicy(std::make_optional(CameraUtilConformWindowPolicy::CameraUtilMatchVertically));
+        _renderer->SetOverrideWindowPolicy(std::make_optional(CameraUtilConformWindowPolicy::CameraUtilMatchHorizontally));
 #endif
-        if (_cameras.IsUsingStageCamera()) {
-            _renderer->SetCameraPath(_cameras.GetStageCameraPath());
-        } else {
-            GfCamera viewportCamera = GetViewportCamera(width, height);
+        // As of today, camera used for SetCameraPath are similar to GetViewportCamera.
+        // This might change in the future and that could cause an issue for the computation
+        // of the manipulator positions.
+ //       if (_cameras.IsUsingStageCamera()) {
+//            _renderer->SetCameraPath(_cameras.GetStageCameraPath());
+//        } else {
+            const GfCamera viewportCamera = GetViewportCamera(width, height);
             _renderer->SetCameraState(viewportCamera.GetFrustum().ComputeViewMatrix(),
                                       viewportCamera.GetFrustum().ComputeProjectionMatrix());
-        }
+  //      }
         _renderer->Render(GetCurrentStage()->GetPseudoRoot(), _imagingSettings);
     } else {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

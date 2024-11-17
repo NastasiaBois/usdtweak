@@ -66,7 +66,7 @@ void CameraRig::ResetPosition(GfCamera &camera) {
         constexpr float focusDistance = 100.f;
         camera.SetFocusDistance(focusDistance);
     } else if (camera.GetProjection() == GfCamera::Orthographic) {
-        camera.SetOrthographicFromAspectRatioAndSize(16.0 / 9.0, camera.GetVerticalAperture() * GfCamera::APERTURE_UNIT,
+        camera.SetOrthographicFromAspectRatioAndSize(16.0 / 9.0, camera.GetHorizontalAperture() * GfCamera::APERTURE_UNIT,
                                                      GfCamera::FOVHorizontal);
     }
 }
@@ -133,21 +133,20 @@ bool CameraRig::Move(GfCamera &camera, double deltaX, double deltaY) {
         auto up = frustum.ComputeUpVector();
         auto cameraAxis = frustum.ComputeViewDirection();
         auto right = GfCross(cameraAxis, up);
-        // Pixel to world - usdview behavior
         double pixelToWorld = 1.0;
+        const GfRange2d &window = frustum.GetWindow();
         if (camera.GetProjection() == GfCamera::Orthographic) {
-            pixelToWorld = camera.GetVerticalAperture() * GfCamera::APERTURE_UNIT / static_cast<double>(_viewportSize[1]);
+            pixelToWorld = window.GetSize()[0] / static_cast<double>(_viewportSize[0]);
         } else {
-            const GfRange2d &window = frustum.GetWindow();
-            pixelToWorld = window.GetSize()[1] * _dist / static_cast<double>(_viewportSize[1]);
+            pixelToWorld = window.GetSize()[0] * _dist / static_cast<double>(_viewportSize[0]);
         }
         center += -deltaX * right * pixelToWorld + deltaY * up * pixelToWorld;
         ToCameraTransform(camera, _zUpMatrix, center, rotation, _dist);
     } else if (_movementType == MovementType::Dolly) { // Not really a dolly in the orthographic case
         auto scaleFactor = 1.0 + -0.002 * (deltaX + deltaY);
         if (camera.GetProjection() == GfCamera::Orthographic) {
-            auto value = camera.GetVerticalAperture() * GfCamera::APERTURE_UNIT * (scaleFactor);
-            camera.SetOrthographicFromAspectRatioAndSize(camera.GetAspectRatio(), value, GfCamera::FOVVertical);
+            auto value = camera.GetHorizontalAperture() * GfCamera::APERTURE_UNIT * (scaleFactor);
+            camera.SetOrthographicFromAspectRatioAndSize(camera.GetAspectRatio(), value, GfCamera::FOVHorizontal);
         } else {
             if (scaleFactor > 1.0 && _dist < 2.0) {
                 const auto selBasedIncr = _selectionSize / 25.0;

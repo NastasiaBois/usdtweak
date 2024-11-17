@@ -19,7 +19,8 @@ public:
 
     // The update function is called before every rendered frame.
     // This updates the internals of this structure following the changes that
-    // happened between the previous frame and now
+    // happened between the previous call to update on the previous frame frame and
+    // the current call
     void Update(const UsdStageRefPtr &stage, UsdTimeCode tc);
      
     //
@@ -84,11 +85,12 @@ private:
         std::array<GfCamera, 7> _cameras;
     };
     
+    // Current set of owned camera belonging to the current stage.
     // We could also copy instead of referencing the cam ...
     OwnedCameras *_ownedCameras;
     
-    // Internal viewport cameras
-    static std::unordered_map<std::string, OwnedCameras> _viewportCamerasPerStage;
+    // Internal cameras per viewport
+    std::unordered_map<std::string, OwnedCameras> _viewportCamerasPerStage;
 
     struct CameraConfiguration {
         SdfPath _stageCameraPath = SdfPath::EmptyPath();
