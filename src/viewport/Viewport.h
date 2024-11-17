@@ -49,6 +49,10 @@ class Viewport final {
     void FrameCameraOnRootPrim();
     void FrameAllCameras();
 
+    /// Viewport size
+    GfVec2i GetViewportSize() const;
+
+
     /// Return the camera structure used to render the viewport which can be modified for reframing, movement, etc
     /// The modification is then applied to the actual camera data, prim or internal at the followin
     /// Update() call.

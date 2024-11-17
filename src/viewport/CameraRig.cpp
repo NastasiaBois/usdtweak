@@ -136,7 +136,7 @@ bool CameraRig::Move(GfCamera &camera, double deltaX, double deltaY) {
         double pixelToWorld = 1.0;
         const GfRange2d &window = frustum.GetWindow();
         if (camera.GetProjection() == GfCamera::Orthographic) {
-            pixelToWorld = window.GetSize()[0] * 2.0 / static_cast<double>(_viewportSize[0]);
+            pixelToWorld = window.GetSize()[0] / static_cast<double>(_viewportSize[0]);
         } else {
             pixelToWorld = window.GetSize()[0] * _dist / static_cast<double>(_viewportSize[0]);
         }
@@ -145,8 +145,8 @@ bool CameraRig::Move(GfCamera &camera, double deltaX, double deltaY) {
     } else if (_movementType == MovementType::Dolly) { // Not really a dolly in the orthographic case
         auto scaleFactor = 1.0 + -0.002 * (deltaX + deltaY);
         if (camera.GetProjection() == GfCamera::Orthographic) {
-            auto value = camera.GetVerticalAperture() * GfCamera::APERTURE_UNIT * (scaleFactor);
-            camera.SetOrthographicFromAspectRatioAndSize(camera.GetAspectRatio(), value, GfCamera::FOVVertical);
+            auto value = camera.GetHorizontalAperture() * GfCamera::APERTURE_UNIT * (scaleFactor);
+            camera.SetOrthographicFromAspectRatioAndSize(camera.GetAspectRatio(), value, GfCamera::FOVHorizontal);
         } else {
             if (scaleFactor > 1.0 && _dist < 2.0) {
                 const auto selBasedIncr = _selectionSize / 25.0;

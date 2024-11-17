@@ -419,50 +419,25 @@ void Viewport::HandleManipulationEvents() {
 }
 
 
+GfVec2i Viewport::GetViewportSize() const {
+    return  _drawTarget->GetSize();
+}
+
 GfCamera &Viewport::GetEditableCamera() { return _cameras.GetEditableCamera(); }
 const GfCamera &Viewport::GetCurrentCamera() const { return _cameras.GetCurrentCamera(); }
 
 // TODO: keep the viewport camera in a variable and avoid recomputing it when not necessary
 GfCamera Viewport::GetViewportCamera(double width, double height) const {
     GfCamera viewportCamera = GetCurrentCamera();
-    
-    //if (!_cameras.IsUsingStageCamera())
-    {
-        if (viewportCamera.GetProjection() == GfCamera::Perspective) {
-            viewportCamera.SetPerspectiveFromAspectRatioAndFieldOfView(width / height,
-                                                                       viewportCamera.GetFieldOfView(GfCamera::FOVHorizontal),
-                                                                       GfCamera::FOVHorizontal);
-            //        // Perspective
-            //        _projection = Perspective;
-            //
-            //        // Set the vertical and horizontal aperture to achieve the aspect ratio
-            //        _horizontalAperture = horizontalAperture;
-            //        _verticalAperture =   horizontalAperture /
-            //            (aspectRatio != 0.0 ? aspectRatio : 1.0);
-            //
-            //        // Pick the right dimension based on the direction parameter
-            //        const float aperture =
-            //            (direction == GfCamera::FOVHorizontal) ?
-            //                               _horizontalAperture : _verticalAperture;
-            //        // Compute tangent for field of view
-            //        const float tanValue = tan(0.5 * GfDegreesToRadians(fieldOfView));
-            //
-            //        if (tanValue == 0) {
-            //            // To avoid division by zero, just set default value
-            //            _focalLength = 50.0;
-            //            return;
-            //        }
-            //
-            //        // Do the math for the focal length.
-            //        _focalLength =
-            //            aperture * GfCamera::APERTURE_UNIT /
-            //            ( 2 * tanValue) / GfCamera::FOCAL_LENGTH_UNIT;
-        } else { // assuming ortho
-            viewportCamera.SetOrthographicFromAspectRatioAndSize(width / height,
-                                                                 viewportCamera.GetHorizontalAperture() * GfCamera::APERTURE_UNIT,
-                                                                 GfCamera::FOVHorizontal);
-        }
+
+    if (viewportCamera.GetProjection() == GfCamera::Perspective) {
+        viewportCamera.SetPerspectiveFromAspectRatioAndFieldOfView(
+            width / height, viewportCamera.GetFieldOfView(GfCamera::FOVHorizontal), GfCamera::FOVHorizontal);
+    } else { // assuming ortho
+        viewportCamera.SetOrthographicFromAspectRatioAndSize(
+            width / height, viewportCamera.GetHorizontalAperture() * GfCamera::APERTURE_UNIT, GfCamera::FOVHorizontal);
     }
+
     return viewportCamera;
 }
 
@@ -550,14 +525,13 @@ void Viewport::Render() {
 #else
         _renderer->SetOverrideWindowPolicy(std::make_optional(CameraUtilConformWindowPolicy::CameraUtilMatchHorizontally));
 #endif
-        _renderer->SetSelectionEnableOutline(true);
+        // As of today, camera used for SetCameraPath are similar to GetViewportCamera.
+        // This might change in the future and that could cause an issue for the computation
+        // of the manipulator positions.
  //       if (_cameras.IsUsingStageCamera()) {
-            // As of today, camera used for SetCameraPath are similar to GetViewportCamera.
-            // This might change in the future and that could cause an issue for the computation
-            // of the manipulator positions.
 //            _renderer->SetCameraPath(_cameras.GetStageCameraPath());
 //        } else {
-            GfCamera viewportCamera = GetViewportCamera(width, height);
+            const GfCamera viewportCamera = GetViewportCamera(width, height);
             _renderer->SetCameraState(viewportCamera.GetFrustum().ComputeViewMatrix(),
                                       viewportCamera.GetFrustum().ComputeProjectionMatrix());
   //      }
